@@ -89,7 +89,7 @@ class InstitucionEducativa(models.Model):
         managed = False
    
     def __str__(self):
-        return self.InstitucionNombre
+        return self.InstiNombre
 
 
 class Estudiante(models.Model):

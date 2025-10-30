@@ -45,14 +45,16 @@ const Register = ({ isOpen, onClose }) => {
     const cargarInstituciones = async () => {
         try {
             // Llamar al endpoint que creaste en el backend
-            const response = await fetch('http://127.0.0.1:8000/usuarios/instituciones/');
+            const response = await fetch('http://127.0.0.1:8000/api/instituciones/');
             const data = await response.json();
             console.log('Instituciones recibidas:', data); // ← DEBUG
             
             // ← IMPORTANTE: Asegurarse de que sea un array de strings
-            const nombresInstituciones = data.map(inst => inst.InstitucionNombre || inst.nombre);
+            const nombresInstituciones = data.map(inst => inst.InstiNombre);
             
             console.log('Nombres procesados:', nombresInstituciones);
+            
+            setInstituciones(data);
             
         } catch (error) {
             console.error('Error al cargar instituciones:', error);
@@ -334,19 +336,29 @@ const Register = ({ isOpen, onClose }) => {
 
         setLoading(true);
         try {
+
+            const institucionObj = instituciones.find(
+            inst => inst.InstiNombre === formData.institucion
+            );
+            
+            if (!institucionObj) {
+                setErrors({ institucion: 'Selecciona una institución válida' });
+                setLoading(false);
+                return;
+            }
+
             const payload = {
                 dni: formData.dni,
-                first_name: formData.nombres,
-                last_name: `${formData.apellidoPaterno} ${formData.apellidoMaterno}`.trim(),
-                apellido_paterno: formData.apellidoPaterno,
-                apellido_materno: formData.apellidoMaterno,
-                telefono: formData.telefono || null,
+                nombres: formData.nombres,
+                ApellodoP: formData.apellidoPaterno,
+                ApellidoM: formData.apellidoMaterno,
+                telefono: formData.telefono,
                 fecha_nacimiento: formData.fechaNacimiento,
-                email: formData.correo,
+                correo: formData.correo,
                 password: formData.password,
                 password_confirm: formData.passwordConfirm,
                 rol: formData.rol,
-                institucion: formData.institucion,
+                insti_id: institucionObj.InstiID,
                 // Campos adicionales si es orientador
                 ...(formData.rol === "Orientador" && {
                     institucion: formData.institucion,
@@ -616,7 +628,7 @@ const Register = ({ isOpen, onClose }) => {
                                     placeholder="Buscar institución..."
                                     value={formData.institucion}
                                     onChange={handleInputChange}
-                                    options={instituciones.map(inst => inst.nombre)}
+                                    options={instituciones.map(inst => inst.InstiNombre)}
                                 />
                             </div>
 

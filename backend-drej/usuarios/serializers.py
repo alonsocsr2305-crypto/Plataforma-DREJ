@@ -217,7 +217,7 @@ class RegisterSerializer(serializers.Serializer):
 class InstitucionSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstitucionEducativa
-        fields = ['InstiID', 'InstiNombre', 'InstiDireccion', 'InstiDistrito'
+        fields = ['InstiID', 'InstiNombre', 'InstiDireccion', 'InstiDistrito',
                   'InstiProvincia', 'InstiRegion']
 
 # Importar Q para las consultas

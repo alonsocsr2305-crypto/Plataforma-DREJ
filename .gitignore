@@ -1,0 +1,52 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+env/
+ENV/
+.venv/
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.cover
+coverage/
+htmlcov/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Django stuff:
+*.mo
+*.log
+local_settings.py
+db.sqlite3
+/media
+/staticfiles
+
+# Node / React
+node_modules/
+build/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.lock-wscript
+.pnpm-debug.log
+
+# VSCode
+.vscode/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Mac
+.AppleDouble
+.LSOverride

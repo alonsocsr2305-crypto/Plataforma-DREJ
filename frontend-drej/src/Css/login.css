@@ -1,0 +1,353 @@
+/* ============================================
+   ESTILOS DEL LOGIN - VocaRed
+   Página de inicio de sesión
+============================================ */
+
+@font-face {
+  font-family: "Ligconsolata";
+  src: url("../assets/Fuentes/Ligconsolata-Regular.ttf") format("truetype");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Ligconsolata";
+  src: url("../assets/Fuentes/Ligconsolata-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
+
+/* Contenedor principal */
+.main-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sección izquierda - Imagen */
+.image-section {
+    flex: 1;
+    background: url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200') center/cover;
+    position: relative;
+}
+
+.image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.3) 0%, rgba(53, 122, 189, 0.4) 100%);
+}
+
+/* Sección derecha - Formulario */
+.login-section {
+    flex: 0 0 500px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 20px 40px;
+    box-shadow: -25px 0 30px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+}
+
+/* LOGO */
+
+.logo-image {
+    width: 120px;
+    height: auto;
+    object-fit: contain; 
+}
+
+.logo-text {
+    width: auto;
+    height: auto;
+}
+
+.logo-text img {
+    width: 166px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.logo-section {
+    text-align: left;
+    margin-bottom: 15px;
+    margin-top: 0;
+}
+
+.logo-container {
+    display: flex; 
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 30px;
+}
+
+/* INPUTS */
+
+.form-group {
+  margin-bottom: 10px;
+}
+
+.login-form input {
+  height: 39px;        
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: 'Ligconsolata', monospace;
+  transition: all 0.3s ease;
+  background-color: #e0dddd; 
+  color: #000000;
+}
+
+.login-form input::placeholder {
+  color: #7E7E7E;
+  opacity: 1;
+  letter-spacing: 1.1px;
+  font-family: 'Ligconsolata', monospace;
+}
+
+.login-form input:focus {
+  border-color: #6a5acd;   /* Color al hacer clic */
+  box-shadow: 0 0 6px rgba(106, 90, 205, 0.3);
+}
+
+/* btn Iniciar sesión */
+
+.btn-primary {
+    height: 39px;        
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-family: 'Ligconsolata', monospace;
+    background-color: #000000;
+}
+
+/* Divider "O" */
+
+.divider {
+    text-align: center;
+    margin: 10px 0px;
+    position: relative;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 42%;
+    height: 1.1px;
+    background: #000000;
+}
+
+.divider::before {
+    left: 0;
+}
+
+.divider::after {
+    right: 0;
+}
+
+.divider span {
+    background: white;
+    padding: 0 15px;
+    color: #000000;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: 'Lingconsolata' monospace;
+}
+
+/* Botones de autenticación alternativa */
+
+.google-btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    width: 70%;
+    max-width: 350px;
+    padding: 10px 20px; 
+    border-radius: 20000px;
+    background-color: #e0dddd;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Ligconsolata', monospace;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+    color: #2c3e50;
+    text-align: right;
+}
+
+.google-btn span{
+    flex: 1; 
+    text-align: left;
+    position: relative;
+    text-align: center
+}
+
+.google-btn:hover {
+    background: #dce4e9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.google-icon {
+  font-size: 20px;
+  margin-right: 8px;
+}
+
+
+.auth-alternatives {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.auth-button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 1200px;
+    width: 70%;
+    max-width: 350px;
+    padding: 10px 20px;  
+    border-radius: 20000px;
+    background-color: #e0dddd;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Ligconsolata', monospace;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+    color: #2c3e50;
+    text-align: left;
+}
+
+.auth-button img {
+    display: block;
+    height: 20px;
+    width: auto;
+    object-fit: contain;
+}
+
+.auth-button:hover {
+    background: #dce4e9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.auth-button span {
+    flex: 1; 
+    text-align: left;
+    position: relative;
+    text-align: center
+}
+
+.DNI-btn {
+    font-weight: 600;
+    gap: 12px;
+}
+
+.telef-btn {
+    font-weight: 600;
+    gap: 12px;
+}
+
+.DNI-btn img {
+    width: 35px;
+}
+
+.telef-btn img {
+    width: 24px;
+}
+
+/* Olvidaste contraseña */
+.forgot-password {
+    text-align: center;
+    margin-top: 6px;
+    margin-bottom: 10px;
+}
+
+.forgot-password a {
+    color: #2c3e50;
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.3s;
+}
+
+.forgot-password a:hover {
+    color: #4a90e2;
+    text-decoration: underline;
+}
+
+/* Botón de registro */
+.btn-register {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #4a90e2;
+    border-radius: 8px;
+    background: white;
+    color: #4a90e2;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-register:hover {
+    background: #4a90e2;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .image-section {
+        display: none;
+    }
+
+    .login-section {
+        flex: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .login-section {
+        padding: 40px 30px;
+    }
+
+    .logo-text h1,
+    .logo-text span {
+        font-size: 28px;
+    }
+
+    .logo-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .graduation-cap {
+        width: 35px;
+        height: 35px;
+    }
+}
+
+@media (max-width: 400px) {
+    .login-section {
+        padding: 30px 20px;
+    }
+
+    .auth-button {
+        font-size: 13px;
+        padding: 12px 14px;
+    }
+}

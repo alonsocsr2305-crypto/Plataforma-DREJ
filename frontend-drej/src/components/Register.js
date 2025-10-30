@@ -79,6 +79,30 @@ const Register = ({ isOpen, onClose }) => {
     ];
 
     /**
+     
+    * const dominiosPermitidosEst = [
+        'gmail.com',
+        'hotmail.com',
+        'yahoo.com',
+        '.com',
+        'roosvelt.edu.pe',
+        '.edu.pe',
+        '.edu',
+        '.ac.pe'
+    ];
+    */
+
+    /**
+     * Permitir solo letras, espacios y acentos
+     */
+    const handleTextInput = (e) => {
+        const { name, value } = e.target;
+        // Permite: letras (a-z, A-Z), espacios, acentos (á, é, í, ó, ú, ñ)
+        const textValue = value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+        setFormData(prev => ({ ...prev, [name]: textValue }));
+    };
+
+    /**
      * Verificar DNI cuando el usuario sale del campo
      */
     const handleDNIBlur = async () => {
@@ -132,7 +156,7 @@ const Register = ({ isOpen, onClose }) => {
             
             if (emailExists.exists) {
                 setErrors(prev => ({ ...prev, correo: 'Este email ya está registrado' }));
-                setEmailValidation({ valid: false, message: '✗ Email ya registrado' });
+                setEmailValidation({ valid: false});
                 setEmailChecking(false);
                 return;
             }
@@ -200,9 +224,8 @@ const Register = ({ isOpen, onClose }) => {
             }
         }
         
-        // Si cambia a orientador, re-validar email si ya tiene uno
-        if (newRol === 'Orientador' && formData.correo.includes('@')) {
-            handleEmailBlur();
+        if (newRol === 'Orientador' && formData.correo && formData.correo.includes('@')) { 
+        handleEmailBlur();
         }
     };
 
@@ -239,6 +262,80 @@ const Register = ({ isOpen, onClose }) => {
             }
             return dominio === dominioPermitido;
         });
+    };
+
+    const validateTextQuality = (text, fieldName) => {
+        if (!text || text.trim().length < 2) {
+            return `${fieldName} es muy corto`;
+        }
+        
+        const cleaned = text.trim().toLowerCase();
+        
+        // 1. Detectar caracteres repetidos (ej: "aaaa", "1111")
+        if (/(.)\1{3,}/.test(cleaned)) {
+            return `${fieldName} contiene demasiados caracteres repetidos`;
+        }
+        
+        // 2. Debe tener al menos una vocal
+        const hasVowels = /[aeiouáéíóú]/.test(cleaned);
+        if (!hasVowels && cleaned.length > 2) {
+            return `${fieldName} debe contener vocales`;
+        }
+        
+        // 3. Debe tener al menos una consonante
+        const hasConsonants = /[bcdfghjklmnpqrstvwxyzñ]/.test(cleaned);
+        if (!hasConsonants && cleaned.length > 2) {
+            return `${fieldName} debe contener consonantes`;
+        }
+        
+        // 4. No puede tener más del 60% de consonantes seguidas
+        const consonantRuns = cleaned.match(/[bcdfghjklmnpqrstvwxyzñ]{4,}/g);
+        if (consonantRuns && consonantRuns.length > 0) {
+            return `${fieldName} tiene demasiadas consonantes seguidas`;
+        }
+        
+        // 5. Detectar patrones repetitivos como "ABAB" o "ABCABC"
+        // Ejemplo: "safas" = "saf" + "as" (patrón repetitivo)
+        for (let len = 2; len <= Math.floor(cleaned.length / 2); len++) {
+            const pattern = cleaned.substring(0, len);
+            const rest = cleaned.substring(len);
+            
+            // Si el resto comienza con parte del patrón, es sospechoso
+            if (rest.startsWith(pattern.substring(0, Math.min(2, pattern.length)))) {
+                return `${fieldName} parece contener un patrón repetitivo`;
+            }
+        }
+        
+        // 6. Detectar sílabas repetidas (ej: "safas" tiene "saf" y "fas" muy similares)
+        const syllables = cleaned.match(/.{2,3}/g) || [];
+        const uniqueSyllables = new Set(syllables);
+        if (syllables.length > 1 && uniqueSyllables.size < syllables.length * 0.6) {
+            return `${fieldName} contiene sílabas muy similares`;
+        }
+        
+        // 7. Verificar alternancia mínima entre vocales y consonantes
+        let changes = 0;
+        let isVowel = /[aeiouáéíóú]/.test(cleaned[0]);
+        
+        for (let i = 1; i < cleaned.length; i++) {
+            const currentIsVowel = /[aeiouáéíóú]/.test(cleaned[i]);
+            if (currentIsVowel !== isVowel) {
+                changes++;
+                isVowel = currentIsVowel;
+            }
+        }
+        
+        // Al menos debe haber cambios proporcionales a la longitud
+        if (changes < cleaned.length * 0.3) {
+            return `${fieldName} no tiene una estructura de nombre válida`;
+        }
+        
+        // 8. No permitir solo espacios
+        if (text.trim().length === 0) {
+            return `${fieldName} no puede estar vacío`;
+        }
+        
+        return null; // ✅ Válido
     };
 
     const handleInputChange = (e) => {
@@ -293,21 +390,64 @@ const Register = ({ isOpen, onClose }) => {
     const validateForm = () => {
         const newErrors = {};
 
-        if (!formData.nombres.trim()) newErrors.nombres = 'Obligatorio';
-        if (!formData.apellidoPaterno.trim()) newErrors.apellidoPaterno = 'Obligatorio';
-        if (!formData.apellidoMaterno.trim()) newErrors.apellidoMaterno = 'Obligatorio';
-        if (!validateDNI(formData.dni)) newErrors.dni = 'DNI inválido (8 dígitos)';
+        // Validación de nombres con calidad
+        if (!formData.nombres.trim()) {
+            newErrors.nombres = 'Obligatorio';
+        } else {
+            const qualityError = validateTextQuality(formData.nombres, 'Nombres');
+            if (qualityError) newErrors.nombres = qualityError;
+        }
         
-        // Validación de teléfono (opcional pero debe ser válido)
+        // Validación apellido paterno
+        if (!formData.apellidoPaterno.trim()) {
+            newErrors.apellidoPaterno = 'Obligatorio';
+        } else {
+            const qualityError = validateTextQuality(formData.apellidoPaterno, 'Apellido Paterno');
+            if (qualityError) newErrors.apellidoPaterno = qualityError;
+        }
+        
+        // Validación apellido materno
+        if (!formData.apellidoMaterno.trim()) {
+            newErrors.apellidoMaterno = 'Obligatorio';
+        } else {
+            const qualityError = validateTextQuality(formData.apellidoMaterno, 'Apellido Materno');
+            if (qualityError) newErrors.apellidoMaterno = qualityError;
+        }
+        
+        // Validación DNI
+        if (!validateDNI(formData.dni)) {
+            newErrors.dni = 'DNI inválido (8 dígitos)';
+        }
+        
+        // Validación de teléfono
         if (formData.telefono && !/^9\d{8}$/.test(formData.telefono.trim())) {
             newErrors.telefono = 'Teléfono inválido (debe empezar con 9 y tener 9 dígitos)';
         }
         
-        if (!validateAge(formData.fechaNacimiento)) newErrors.fechaNacimiento = 'Debes tener al menos 13 años';
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correo.trim())) newErrors.correo = 'Correo inválido';
-        if (formData.password.length < 8) newErrors.password = 'Mínimo 8 caracteres';
-        if (formData.password !== formData.passwordConfirm) newErrors.passwordConfirm = 'Las contraseñas no coinciden';
-        if (!acceptTerms) newErrors.terms = 'Debes aceptar los términos';
+        // Validación de edad
+        if (!validateAge(formData.fechaNacimiento)) {
+            newErrors.fechaNacimiento = 'Debes tener al menos 13 años';
+        }
+        
+        // Validación de email
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.correo.trim())) {
+            newErrors.correo = 'Correo inválido';
+        }
+        
+        // Validación de contraseña
+        if (formData.password.length < 8) {
+            newErrors.password = 'Mínimo 8 caracteres';
+        }
+        
+        // Validación de confirmación de contraseña
+        if (formData.password !== formData.passwordConfirm) {
+            newErrors.passwordConfirm = 'Las contraseñas no coinciden';
+        }
+        
+        // Validación de términos
+        if (!acceptTerms) {
+            newErrors.terms = 'Debes aceptar los términos';
+        }
 
         // Validaciones adicionales para Orientador
         if (formData.rol === "Orientador") {
@@ -319,16 +459,30 @@ const Register = ({ isOpen, onClose }) => {
             }
             if (!formData.cargo.trim()) {
                 newErrors.cargo = 'El cargo es obligatorio para orientadores';
+            } else {
+                const qualityError = validateTextQuality(formData.cargo, 'Cargo');
+                if (qualityError) newErrors.cargo = qualityError;
             }
+            
             if (!formData.areaEspecializacion.trim()) {
                 newErrors.areaEspecializacion = 'El área de especialización es obligatoria';
+            } else {
+                const qualityError = validateTextQuality(formData.areaEspecializacion, 'Área de Especialización');
+                if (qualityError) newErrors.areaEspecializacion = qualityError;
             }
         }
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return Object.keys(newErrors).length === 0;  // ✅ MUY IMPORTANTE - ESTO FALTABA
     };
 
+    const handleNumericInput = (e) => {
+        const { name, value } = e.target;
+        // Solo permite dígitos
+        const numericValue = value.replace(/\D/g, '');
+        setFormData(prev => ({ ...prev, [name]: numericValue }));
+    };
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErrors({});
@@ -349,24 +503,35 @@ const Register = ({ isOpen, onClose }) => {
 
             const payload = {
                 dni: formData.dni,
-                nombres: formData.nombres,
-                ApellidoP: formData.apellidoPaterno,
-                ApellidoM: formData.apellidoMaterno,
-                telefono: formData.telefono,
-                fecha_nacimiento: formData.fechaNacimiento,
-                correo: formData.correo,
+                first_name: formData.nombres,
+                last_name: `${formData.apellidoPaterno} ${formData.apellidoMaterno}`.trim(),
                 password: formData.password,
-                password_confirm: formData.passwordConfirm,
+                passwordConfirm: formData.passwordConfirm,
+                
+                nombres: formData.nombres,
+                apellidoPaterno: formData.apellidoPaterno,
+                apellidoMaterno: formData.apellidoMaterno,
+                telefono: formData.telefono,
+                fechaNacimiento: formData.fechaNacimiento,
+                email: formData.correo,
                 rol: formData.rol,
                 insti_id: institucionObj.InstiID,
+
                 // Campos adicionales si es orientador
                 ...(formData.rol === "Orientador" && {
-                    institucion: formData.institucion,
+                    institucion: institucionObj.InstiNombre || '',
                     cargo: formData.cargo,
-                    area_especializacion: formData.areaEspecializacion,
-                    perfil_profesional: formData.perfilProfesional || null
+                    areaEspecializacion: formData.areaEspecializacion || '',
+                    perfilProfesional: formData.perfilProfesional || null
                 })
             };
+
+            console.log('=== DEBUGGING ORIENTADOR ===');
+            console.log('formData.cargo:', formData.cargo);
+            console.log('formData.areaEspecializacion:', formData.areaEspecializacion);
+            console.log('formData.perfilProfesional:', formData.perfilProfesional);
+            console.log('Payload completo:', JSON.stringify(payload, null, 2));
+
 
             console.log("[REGISTER] Enviando payload:", payload);
             const res = await authAPI.register(payload);
@@ -525,9 +690,8 @@ const Register = ({ isOpen, onClose }) => {
                                     type="text" 
                                     name="nombres"
                                     value={formData.nombres}
-                                    onChange={handleInputChange}
+                                    onChange={handleTextInput}
                                     placeholder="Nombres *" 
-                                    required
                                 />
                                 {errors.nombres && <span className="error-text">{errors.nombres}</span>}
                             </div>
@@ -537,9 +701,8 @@ const Register = ({ isOpen, onClose }) => {
                                     type="text" 
                                     name="apellidoPaterno"
                                     value={formData.apellidoPaterno}
-                                    onChange={handleInputChange}
+                                    onChange={handleTextInput}
                                     placeholder="Apellido Paterno *" 
-                                    required
                                 />
                                 {errors.apellidoPaterno && <span className="error-text">{errors.apellidoPaterno}</span>}
                             </div>
@@ -549,9 +712,8 @@ const Register = ({ isOpen, onClose }) => {
                                     type="text" 
                                     name="apellidoMaterno"
                                     value={formData.apellidoMaterno}
-                                    onChange={handleInputChange}
+                                    onChange={handleTextInput}
                                     placeholder="Apellido Materno *" 
-                                    required
                                 />
                                 {errors.apellidoMaterno && <span className="error-text">{errors.apellidoMaterno}</span>}
                             </div>
@@ -561,11 +723,12 @@ const Register = ({ isOpen, onClose }) => {
                                     type="text" 
                                     name="dni"
                                     value={formData.dni}
-                                    onChange={handleInputChange}
+                                    onChange={handleNumericInput}
                                     onBlur={handleDNIBlur}
                                     placeholder="DNI (8 dígitos) *" 
                                     maxLength="8"
-                                    required
+                                    inputMode="numeric"
+                                    pattern="[0-9]*"
                                 />
                                 {errors.dni && <span className="error-text">{errors.dni}</span>}
                             </div>
@@ -575,9 +738,11 @@ const Register = ({ isOpen, onClose }) => {
                                     type="text" 
                                     name="telefono"
                                     value={formData.telefono}
-                                    onChange={handleInputChange}
+                                    onChange={handleNumericInput}
                                     placeholder="Teléfono (9XXXXXXXX)*" 
                                     maxLength="9"
+                                    inputMode='numeric'
+                                    pattern="[0-9]*"
                                 />
                                 {errors.telefono && <span className="error-text">{errors.telefono}</span>}
                             </div>
@@ -590,7 +755,6 @@ const Register = ({ isOpen, onClose }) => {
                                     onChange={handleInputChange}
                                     placeholder="Fecha de Nacimiento *"
                                     max="2010-12-31" 
-                                    required
                                 />
                                 {errors.fechaNacimiento && <span className="error-text">{errors.fechaNacimiento}</span>}
                             </div>
@@ -604,7 +768,6 @@ const Register = ({ isOpen, onClose }) => {
                                     onChange={handleInputChange}
                                     onBlur={handleEmailBlur}
                                     placeholder={isOrientador ? "Correo Institucional *" : "Correo Electrónico *"} 
-                                    required
                                     style={{
                                         borderColor: emailValidation.valid === false ? '#d32f2f' : 
                                                     emailValidation.valid === true ? '#4CAF50' : undefined
@@ -641,9 +804,8 @@ const Register = ({ isOpen, onClose }) => {
                                             type="text" 
                                             name="cargo"
                                             value={formData.cargo}
-                                            onChange={handleInputChange}
+                                            onChange={handleTextInput}
                                             placeholder="Cargo/Posición *" 
-                                            required
                                         />
                                         {errors.cargo && <span className="error-text">{errors.cargo}</span>}
                                     </div>
@@ -653,9 +815,8 @@ const Register = ({ isOpen, onClose }) => {
                                             type="text" 
                                             name="areaEspecializacion"
                                             value={formData.areaEspecializacion}
-                                            onChange={handleInputChange}
+                                            onChange={handleTextInput}
                                             placeholder="Área de Especialización *" 
-                                            required
                                         />
                                         {errors.areaEspecializacion && <span className="error-text">{errors.areaEspecializacion}</span>}
                                     </div>
@@ -682,7 +843,6 @@ const Register = ({ isOpen, onClose }) => {
                                         onChange={handleInputChange}
                                         placeholder="Contraseña *"
                                         minLength="8"
-                                        required
                                         className={`input-password`}
                                     /> 
                                     <button
@@ -716,7 +876,6 @@ const Register = ({ isOpen, onClose }) => {
                                         value={formData.passwordConfirm}
                                         onChange={handleInputChange}
                                         placeholder="Repetir Contraseña *" 
-                                        required
                                     />
                                     <button
                                         type="button"

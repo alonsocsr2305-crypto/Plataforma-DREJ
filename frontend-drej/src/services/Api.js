@@ -103,7 +103,7 @@ export const authAPI = {
    * @param {string} payload.fecha_nacimiento - Fecha en formato YYYY-MM-DD
    * @param {string} payload.email - Correo electrónico
    * @param {string} payload.password - Contraseña
-   * @param {string} payload.password_confirm - Confirmación de contraseña
+   * @param {string} payload.passwordConfirm - Confirmación de contraseña
    * @param {string} payload.rol - "Estudiante" o "Orientador"
    * @param {string} payload.institucion - Institución (solo Orientador)
    * @param {string} payload.cargo - Cargo (solo Orientador)

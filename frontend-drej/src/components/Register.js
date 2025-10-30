@@ -350,7 +350,7 @@ const Register = ({ isOpen, onClose }) => {
             const payload = {
                 dni: formData.dni,
                 nombres: formData.nombres,
-                ApellodoP: formData.apellidoPaterno,
+                ApellidoP: formData.apellidoPaterno,
                 ApellidoM: formData.apellidoMaterno,
                 telefono: formData.telefono,
                 fecha_nacimiento: formData.fechaNacimiento,

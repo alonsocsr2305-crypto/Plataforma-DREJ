@@ -188,7 +188,7 @@ const Register = ({ isOpen, onClose }) => {
                 }
             } else {
                 // Estudiante - email disponible
-                setEmailValidation({ valid: true, message: '✓ Email disponible' });
+                setEmailValidation({ valid: true});
                 setErrors(prev => {
                     const newErrors = { ...prev };
                     delete newErrors.correo;
@@ -476,6 +476,119 @@ const Register = ({ isOpen, onClose }) => {
         return Object.keys(newErrors).length === 0;  // ✅ MUY IMPORTANTE - ESTO FALTABA
     };
 
+    /**
+     * Validar campo individual cuando el usuario sale del input (onBlur)
+     */
+    const handleFieldBlur = (e) => {
+        const { name, value } = e.target;
+        const fieldErrors = {};
+
+        switch(name) {
+            case 'nombres':
+                if (!value.trim()) {
+                    fieldErrors.nombres = 'Obligatorio';
+                } else {
+                    const error = validateTextQuality(value, 'Nombres');
+                    if (error) fieldErrors.nombres = error;
+                }
+                break;
+                
+            case 'apellidoPaterno':
+                if (!value.trim()) {
+                    fieldErrors.apellidoPaterno = 'Obligatorio';
+                } else {
+                    const error = validateTextQuality(value, 'Apellido Paterno');
+                    if (error) fieldErrors.apellidoPaterno = error;
+                }
+                break;
+                
+            case 'apellidoMaterno':
+                if (!value.trim()) {
+                    fieldErrors.apellidoMaterno = 'Obligatorio';
+                } else {
+                    const error = validateTextQuality(value, 'Apellido Materno');
+                    if (error) fieldErrors.apellidoMaterno = error;
+                }
+                break;
+                
+            case 'dni':
+                if (!validateDNI(value)) {
+                    fieldErrors.dni = 'DNI inválido (8 dígitos)';
+                }
+                // No llamar handleDNIBlur aquí porque ya tiene su propio handler
+                break;
+                
+            case 'telefono':
+                if (value && !/^9\d{8}$/.test(value.trim())) {
+                    fieldErrors.telefono = 'Teléfono inválido (debe empezar con 9 y tener 9 dígitos)';
+                }
+                
+            case 'fechaNacimiento':
+                if (!validateAge(value)) {
+                    fieldErrors.fechaNacimiento = 'Debes tener al menos 13 años';
+                }
+                break;
+                
+            case 'password':
+                if (value.length < 8) {
+                    fieldErrors.password = 'Mínimo 8 caracteres';
+                }
+                break;
+                
+            case 'passwordConfirm':
+                if (value !== formData.password) {
+                    fieldErrors.passwordConfirm = 'Las contraseñas no coinciden';
+                }
+                break;
+                
+            case 'cargo':
+                if (formData.rol === 'Orientador') {
+                    if (!value.trim()) {
+                        fieldErrors.cargo = 'Obligatorio para orientadores';
+                    } else {
+                        const error = validateTextQuality(value, 'Cargo');
+                        if (error) fieldErrors.cargo = error;
+                    }
+                }
+                break;
+                
+            case 'areaEspecializacion':
+                if (formData.rol === 'Orientador') {
+                    if (!value.trim()) {
+                        fieldErrors.areaEspecializacion = 'Obligatorio para orientadores';
+                    } else {
+                        const error = validateTextQuality(value, 'Área de Especialización');
+                        if (error) fieldErrors.areaEspecializacion = error;
+                    }
+                }
+                break;
+        }
+
+        // Actualizar errores (mantener otros errores existentes)
+        setErrors(prev => {
+            const newErrors = { ...prev };
+            
+            // Si hay error, agregarlo
+            if (Object.keys(fieldErrors).length > 0) {
+                Object.assign(newErrors, fieldErrors);
+            } else {
+                // Si no hay error, limpiar el error de ese campo
+                delete newErrors[name];
+            }
+            
+            return newErrors;
+        });
+    };
+
+    /**
+     * Obtener clase CSS según estado del campo
+     */
+    const getInputClassName = (fieldName) => {
+        if (errors[fieldName]) return 'input-error';
+        if (formData[fieldName] && !errors[fieldName]) return 'input-success';
+        return '';
+    };
+
     const handleNumericInput = (e) => {
         const { name, value } = e.target;
         // Solo permite dígitos
@@ -691,7 +804,9 @@ const Register = ({ isOpen, onClose }) => {
                                     name="nombres"
                                     value={formData.nombres}
                                     onChange={handleTextInput}
+                                    onBlur={handleFieldBlur}
                                     placeholder="Nombres *" 
+                                    className={getInputClassName('nombres')}
                                 />
                                 {errors.nombres && <span className="error-text">{errors.nombres}</span>}
                             </div>
@@ -702,7 +817,9 @@ const Register = ({ isOpen, onClose }) => {
                                     name="apellidoPaterno"
                                     value={formData.apellidoPaterno}
                                     onChange={handleTextInput}
-                                    placeholder="Apellido Paterno *" 
+                                    onBlur={handleFieldBlur}
+                                    placeholder="Apellido Paterno *"
+                                    className={getInputClassName('apellidoPaterno')} 
                                 />
                                 {errors.apellidoPaterno && <span className="error-text">{errors.apellidoPaterno}</span>}
                             </div>
@@ -713,7 +830,9 @@ const Register = ({ isOpen, onClose }) => {
                                     name="apellidoMaterno"
                                     value={formData.apellidoMaterno}
                                     onChange={handleTextInput}
-                                    placeholder="Apellido Materno *" 
+                                    onBlur={handleFieldBlur}
+                                    placeholder="Apellido Materno *"
+                                    className={getInputClassName('apellidoMaterno')} 
                                 />
                                 {errors.apellidoMaterno && <span className="error-text">{errors.apellidoMaterno}</span>}
                             </div>
@@ -724,11 +843,14 @@ const Register = ({ isOpen, onClose }) => {
                                     name="dni"
                                     value={formData.dni}
                                     onChange={handleNumericInput}
-                                    onBlur={handleDNIBlur}
+                                    onBlur={(e) => {
+                                        handleFieldBlur(e);
+                                        handleDNIBlur();  // También verificar si existe en BD
+                                    }}
                                     placeholder="DNI (8 dígitos) *" 
                                     maxLength="8"
                                     inputMode="numeric"
-                                    pattern="[0-9]*"
+                                    className={getInputClassName('dni')}
                                 />
                                 {errors.dni && <span className="error-text">{errors.dni}</span>}
                             </div>
@@ -739,10 +861,12 @@ const Register = ({ isOpen, onClose }) => {
                                     name="telefono"
                                     value={formData.telefono}
                                     onChange={handleNumericInput}
-                                    placeholder="Teléfono (9XXXXXXXX)*" 
+                                    onBlur={handleFieldBlur}
+                                    placeholder="Teléfono *" 
                                     maxLength="9"
                                     inputMode='numeric'
                                     pattern="[0-9]*"
+                                    className={getInputClassName('telefono')}
                                 />
                                 {errors.telefono && <span className="error-text">{errors.telefono}</span>}
                             </div>
@@ -753,8 +877,10 @@ const Register = ({ isOpen, onClose }) => {
                                     name="fechaNacimiento"
                                     value={formData.fechaNacimiento}
                                     onChange={handleInputChange}
+                                    onBlur={handleFieldBlur}
                                     placeholder="Fecha de Nacimiento *"
-                                    max="2010-12-31" 
+                                    max="2010-12-31"
+                                    className={getInputClassName('fechaNacimiento')}
                                 />
                                 {errors.fechaNacimiento && <span className="error-text">{errors.fechaNacimiento}</span>}
                             </div>
@@ -768,6 +894,7 @@ const Register = ({ isOpen, onClose }) => {
                                     onChange={handleInputChange}
                                     onBlur={handleEmailBlur}
                                     placeholder={isOrientador ? "Correo Institucional *" : "Correo Electrónico *"} 
+                                    className={getInputClassName('correo')}
                                     style={{
                                         borderColor: emailValidation.valid === false ? '#d32f2f' : 
                                                     emailValidation.valid === true ? '#4CAF50' : undefined
@@ -805,7 +932,9 @@ const Register = ({ isOpen, onClose }) => {
                                             name="cargo"
                                             value={formData.cargo}
                                             onChange={handleTextInput}
-                                            placeholder="Cargo/Posición *" 
+                                            onBlur={handleFieldBlur}
+                                            placeholder="Cargo/Posición *"
+                                            className={getInputClassName('cargo')} 
                                         />
                                         {errors.cargo && <span className="error-text">{errors.cargo}</span>}
                                     </div>
@@ -816,7 +945,9 @@ const Register = ({ isOpen, onClose }) => {
                                             name="areaEspecializacion"
                                             value={formData.areaEspecializacion}
                                             onChange={handleTextInput}
-                                            placeholder="Área de Especialización *" 
+                                            onBlur={handleFieldBlur}
+                                            placeholder="Área de Especialización *"
+                                            className={getInputClassName('areaEspecializacion')}
                                         />
                                         {errors.areaEspecializacion && <span className="error-text">{errors.areaEspecializacion}</span>}
                                     </div>
@@ -841,9 +972,10 @@ const Register = ({ isOpen, onClose }) => {
                                         name="password"
                                         value={formData.password}
                                         onChange={handleInputChange}
+                                        onBlur={handleFieldBlur}
                                         placeholder="Contraseña *"
                                         minLength="8"
-                                        className={`input-password`}
+                                        className={`input-password ${getInputClassName('password')}`}
                                     /> 
                                     <button
                                         type="button"
@@ -875,7 +1007,9 @@ const Register = ({ isOpen, onClose }) => {
                                         name="passwordConfirm"
                                         value={formData.passwordConfirm}
                                         onChange={handleInputChange}
-                                        placeholder="Repetir Contraseña *" 
+                                        onBlur={handleFieldBlur}
+                                        placeholder="Repetir Contraseña *"
+                                        className={getInputClassName('passwordConfirm')} 
                                     />
                                     <button
                                         type="button"

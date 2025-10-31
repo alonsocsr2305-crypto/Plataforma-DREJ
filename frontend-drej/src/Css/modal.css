@@ -362,26 +362,27 @@
     width: 0%;
     transition: width 0.4s ease, background-color 0.4s ease;
     border-radius: 4px;
+    margin-left: 2px;
 }
 
 /* Colores dinámicos */
 .strength-1 {
-    width: 25%;
+    width: 50%;
     background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
 }
 
 .strength-2 {
-    width: 50%;
+    width: 100%;
     background: linear-gradient(90deg, #f39c12 0%, #e67e22 100%);
 }
 
 .strength-3 {
-    width: 75%;
+    width: 150%;
     background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
 }
 
 .strength-4 {
-    width: 100%;
+    width: 200%;
     background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
 }
 
@@ -389,7 +390,7 @@
 .strength-label {
     display: block;
     text-align: left;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 600;
     margin-top: 6px;
     padding: 4px 8px;
@@ -555,6 +556,46 @@
     color: #7f8c8d;
     font-size: 14px;
     font-weight: 500;
+}
+
+.form-group input.input-error,
+.form-group select.input-error {
+    border: 2px solid #d32f2f;
+    background-color: #ffebee;
+}
+
+/* Input con éxito */
+.form-group input.input-success,
+.form-group select.input-success {
+    border: 2px solid #4CAF50;
+    background-color: #f1f8f4;
+}
+
+/* Texto de error más visible */
+.error-text {
+    color: #d32f2f;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: block;
+    animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Opcional: Icono de error/éxito dentro del input */
+.form-group {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
 }
 
 /* ============================================

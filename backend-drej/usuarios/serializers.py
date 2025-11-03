@@ -17,7 +17,7 @@ class RegisterSerializer(serializers.Serializer):
     fecha_nacimiento = serializers.DateField()
     email = serializers.EmailField()
     password = serializers.CharField(min_length=8, write_only=True)
-    password_confirm = serializers.CharField(min_length=8, write_only=True)
+    passwordConfirm = serializers.CharField(min_length=8, write_only=True)
     rol = serializers.ChoiceField(choices=['Estudiante', 'Orientador'])
     insti_id = serializers.IntegerField(required=True)
     
@@ -79,8 +79,8 @@ class RegisterSerializer(serializers.Serializer):
     def validate(self, data):
         """Validaciones generales"""
         # Verificar que las contraseñas coincidan
-        if data['password'] != data['password_confirm']:
-            raise serializers.ValidationError({"password_confirm": "Las contraseñas no coinciden"})
+        if data['password'] != data['passwordConfirm']:
+            raise serializers.ValidationError({"passwordConfirm": "Las contraseñas no coinciden"})
         
         # Validaciones específicas para Orientador
         if data['rol'] == 'Orientador':

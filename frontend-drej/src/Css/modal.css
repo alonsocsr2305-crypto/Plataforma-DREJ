@@ -362,27 +362,26 @@
     width: 0%;
     transition: width 0.4s ease, background-color 0.4s ease;
     border-radius: 4px;
-    margin-left: 2px;
 }
 
 /* Colores dinámicos */
 .strength-1 {
-    width: 50%;
+    width: 25%;
     background: linear-gradient(90deg, #e74c3c 0%, #c0392b 100%);
 }
 
 .strength-2 {
-    width: 100%;
+    width: 50%;
     background: linear-gradient(90deg, #f39c12 0%, #e67e22 100%);
 }
 
 .strength-3 {
-    width: 150%;
+    width: 75%;
     background: linear-gradient(90deg, #3498db 0%, #2980b9 100%);
 }
 
 .strength-4 {
-    width: 200%;
+    width: 100%;
     background: linear-gradient(90deg, #2ecc71 0%, #27ae60 100%);
 }
 

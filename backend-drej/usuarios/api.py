@@ -8,14 +8,30 @@ from django.utils import timezone
 from .models import Estudiante, Orientador, EstadoVerificacion, Rol, InstitucionEducativa
 import re
 
+def to_title_case(text):
+    """Convertir texto a Title Case (Primera letra mayúscula)"""
+    if not text:
+        return ""
+    return text.strip().title()
 
 class RegisterView(APIView):
     def post(self, request):
         data = request.data
         print("[DEBUG] Datos recibidos del frontend:", data)
 
-        required_common = ["correo", "password", "passwordConfirm", "nombres", "ApellidoP", "dni", "telefono", "institucion"]
+        required_common = ["email", "password", "passwordConfirm", "first_name", "last_name", "dni", "telefono"]
         missing = [k for k in required_common if not data.get(k) or not str(data.get(k)).strip()]
+        rol = data.get("rol", "").strip()   
+        
+        if rol == "Orientador":
+            # Para orientadores SÍ es obligatorio el nombre de la institución
+            if not data.get("institucion") or not str(data.get("institucion")).strip():
+                missing.append("institucion")
+            if not data.get("cargo") or not str(data.get("cargo")).strip():
+                missing.append("cargo")
+            if not data.get("areaEspecializacion") or not str(data.get("areaEspecializacion")).strip():
+                missing.append("areaEspecializacion")
+
         if missing:
             return Response(
                 {"detail": f"Faltan campos obligatorios: {', '.join(missing)}"}, 
@@ -37,9 +53,9 @@ class RegisterView(APIView):
             )
         
         # Validación de email duplicado
-        if User.objects.filter(email__iexact=data["correo"]).exists():
+        if User.objects.filter(email__iexact=data["email"]).exists():
             return Response(
-                {"correo": ["Este correo ya está registrado"]}, 
+                {"email": ["Este correo ya está registrado"]}, 
                 status=400
             )
         
@@ -66,14 +82,6 @@ class RegisterView(APIView):
                 status=400
             )
         
-        # ✅ Validación de institución
-        institucion = data.get("institucion", "").strip()
-        if not institucion:
-            return Response(
-                {"institucion": ["La institución es obligatoria"]},
-                status=400
-            )
-        
         rol_name = data.get("rol", "Estudiante")
         
         # ✅ Validaciones específicas para ORIENTADOR
@@ -95,10 +103,10 @@ class RegisterView(APIView):
                 username = data["email"]  # SimpleJWT usa 'username' por defecto
                 user = User.objects.create_user(
                     username=username,
-                    email=data["correo"],
+                    email=data["email"],
                     password=data["password"],
-                    first_name=data.get("nombres", ""),
-                    last_name=f"{data.get('apellidoPaterno', '')} {data.get('apellidoMaterno', '')}".strip(),
+                    first_name=to_title_case(data.get("nombres", "")),
+                    last_name=f"{to_title_case(data.get('apellidoPaterno', ''))} {to_title_case(data.get('apellidoMaterno', ''))}".strip(),
                 )
 
                 # 3) Si es Estudiante, crea fila en tblEstudiante
@@ -108,10 +116,10 @@ class RegisterView(APIView):
 
                     Estudiante.objects.create(
                         EstudDNI= data.get("dni"),
-                        EstudNombres=data.get("first_name", ""),
-                        EstudApellidoPaterno=data.get("apellido_paterno", ""),
-                        EstudApellidoMaterno=data.get("apellido_materno", ""),
-                        EstudFechaNac=data.get("fecha_nacimiento"),  # DRF lo pasa como string compatible; tu campo es DATE
+                        EstudNombres=to_title_case(data.get("nombres", "")),
+                        EstudApellidoPaterno=to_title_case(data.get("apellidoPaterno")),
+                        EstudApellidoMaterno=to_title_case(data.get("apellidoMaterno")),
+                        EstudFechaNac=data.get("fechaNacimiento"),  # DRF lo pasa como string compatible; tu campo es DATE
                         EstudTelefono=telefono,   # opcional si lo envías
                         User_id=user.id,       # usa columna UserID -> auth_user.id
                         Insti_id=data.get("insti_id"),
@@ -126,14 +134,13 @@ class RegisterView(APIView):
                     try:
                         estado_pendiente = EstadoVerificacion.objects.get(EstadoVerifID=1)
                     except EstadoVerificacion.DoesNotExist:
-                        return Response(
-                            {"detail": "Estado de verificación no encontrado. Contacte al administrador."},
-                            status=500
-                        )
+                        raise ValueError("Estado de verificación no encontrado")
+                    
+                    institucion = data.get("institucion", "").strip()
                     cargo = data.get("cargo", "").strip()
                     area_esp = data.get("areaEspecializacion", "").strip()
-                    perfil = data.get("perfilProfesional", "").strip()
-                    insti_id = data.get("insti_id"),
+                    perfil = (data.get("perfilProfesional") or "").strip()
+                    insti_id = data.get("insti_id")
                     #fch_veri = data.get("fecha_verificacion")
                     
                     print(f"[DEBUG] Institución: '{institucion}'")
@@ -146,27 +153,24 @@ class RegisterView(APIView):
                         try:
                             InstitucionEducativa.objects.get(InstiID=insti_id)
                         except InstitucionEducativa.DoesNotExist:
-                            return Response(
-                                {"institucion": ["La institución seleccionada no existe"]},
-                                status=400
-                            )
+                            raise ValueError("La institución seleccionada no existe")
                     
                     orientador = Orientador.objects.create(
                         OrienDNI=dni,
-                        OrienNombres=data.get("nombres", ""),
-                        OrienApellidoPaterno=data.get("apellidoPaterno", ""),
-                        OrienApellidoMaterno=data.get("apellidoMaterno", ""),
+                        OrienNombres=to_title_case(data.get("nombres")),
+                        OrienApellidoPaterno=to_title_case(data.get("apellidoPaterno")),
+                        OrienApellidoMaterno=to_title_case(data.get("apellidoMaterno")),
                         OrienFechaNacimiento=data.get("fechaNacimiento"),
-                        OrienInstitucion=institucion,
-                        OrienCargo=cargo,
-                        OrienAreaEspecializacion=area_esp,
-                        OrienEmailInstitucional=data["correo"],
+                        OrienInstitucion=to_title_case(institucion),
+                        OrienCargo=to_title_case(cargo),
+                        OrienAreaEspecializacion=to_title_case(area_esp),
+                        OrienEmailInstitucional=data["email"],
                         OrienTelefono=telefono,
                         OrienPerfilProfesional=perfil if perfil else None,
                         FechaRegistro=timezone.now(),
                         EstadoVerif_id=estado_pendiente.EstadoVerifID,
                         User_id=user.id,
-                        Insti_id=insti_id,
+                        Insti_id=data.get("insti_id"),
                         Rol_id=rol_orientador.RolID  # ✅ Asignar rol
                     )
                     print(f"[DEBUG] Orientador creado exitosamente con ID: {orientador.OrienID}")
@@ -177,6 +181,13 @@ class RegisterView(APIView):
                 {"detail": f"Rol '{rol_name}' no encontrado en el sistema"},
                 status=500
             )
+        
+        except ValueError as e:  # ✅ AGREGAR ESTO
+            return Response(
+                {"detail": str(e)},
+                status=400
+            )
+
         except IntegrityError as e:
             error_msg = str(e)
             print(f"[ERROR] IntegrityError: {error_msg}")

@@ -27,19 +27,52 @@ const Login = () => {
         e.preventDefault();
         setError('');
         setLoading(true);
+        
+        console.log('🔐 [LOGIN] Iniciando proceso de login...');
+        console.log('📧 Email/Username:', loginEmail);
+
         try {
-            await authAPI.login({ username: loginEmail, password: loginPassword });
-            // opcional: verifica usuario
-            // const me = await authAPI.me();
-            // console.log(me);
-            alert('¡Bienvenido!');
+            // 1. Intentar login
+            console.log('⏳ [LOGIN] Enviando credenciales al backend...');
+            const loginResponse = await authAPI.login({ 
+                username: loginEmail, 
+                password: loginPassword 
+            });
+            console.log('✅ [LOGIN] Login exitoso:', loginResponse);
+            
+            // 2. Verificar usuario autenticado
+            console.log('👤 [LOGIN] Obteniendo datos del usuario...');
+            const userData = await authAPI.me();
+            console.log('✅ [LOGIN] Datos del usuario:', userData);
+            
+            // 3. Mostrar info en consola
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('🎉 LOGIN EXITOSO');
+            console.log('Usuario:', userData.user);
+            console.log('Email:', userData.email);
+            console.log('Rol:', userData.rol?.rol_nombre || 'N/A');
+            console.log('Tipo:', userData.rol?.tipo_usuario || 'N/A');
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            
+            alert(`¡Bienvenido ${userData.first_name || userData.user}!\n\nRol: ${userData.rol?.rol_nombre}\nTipo: ${userData.rol?.tipo_usuario}`);
             navigate('/dashboard');
+            
         } catch (err) {
-            console.error('Error en login:', err);
+            console.error('❌ [LOGIN] Error:', err);
+            console.error('📄 [LOGIN] Error completo:', err.response || err);
+            
             if (err.response) {
-            setError(err.response.data.detail || 'Credenciales incorrectas');
+                const errorMsg = err.response.data.detail || 
+                                err.response.data.error || 
+                                'Credenciales incorrectas';
+                console.error('⚠️ [LOGIN] Mensaje de error:', errorMsg);
+                setError(errorMsg);
+            } else if (err.request) {
+                console.error('⚠️ [LOGIN] No se recibió respuesta del servidor');
+                setError('Error de conexión. Verifica que el backend esté corriendo en http://127.0.0.1:8000');
             } else {
-            setError('Error de conexión. Verifica que el backend esté corriendo.');
+                console.error('⚠️ [LOGIN] Error desconocido:', err.message);
+                setError('Error inesperado: ' + err.message);
             }
         } finally {
             setLoading(false);
@@ -103,6 +136,20 @@ const Login = () => {
                     </div>
                 </div>
 
+                {error && (
+                    <div style={{
+                        padding: '12px',
+                        marginBottom: '16px',
+                        backgroundColor: '#ffebee',
+                        border: '1px solid #ef5350',
+                        borderRadius: '8px',
+                        color: '#c62828',
+                        fontSize: '14px'
+                    }}>
+                        ⚠️ {error}
+                    </div>
+                )}
+
                 {/* Formulario de Login */}
                 <form className="login-form" onSubmit={handleLogin}>
                     <div className="form-group">
@@ -127,8 +174,8 @@ const Login = () => {
                         />
                     </div>
 
-                    <button type="submit" className="btn-primary">
-                        Iniciar Sesión
+                    <button type="submit" className="btn-primary" disabled={loading}>
+                        {loading ? 'Iniciando sesión...': 'Iniciar Sesión'}
                     </button>
                 </form>
 

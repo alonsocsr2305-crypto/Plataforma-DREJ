@@ -100,7 +100,7 @@ class RegisterView(APIView):
         try:
             with transaction.atomic():
                 # 1) Crea usuario
-                username = data["email"]  # SimpleJWT usa 'username' por defecto
+                username = data["dni"]  # SimpleJWT usa 'username' por defecto
                 user = User.objects.create_user(
                     username=username,
                     email=data["email"],

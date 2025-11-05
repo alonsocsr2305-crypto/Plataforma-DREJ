@@ -1,3 +1,4 @@
+import requests
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -150,3 +151,160 @@ def validate_domain(request):
         'valid': False,
         'message': 'Dominio no permitido para orientadores'
     })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def consultar_reniec(request, dni):
+    """
+    Consultar datos de una persona por DNI en RENIEC
+    
+    GET /api/reniec/consultar/<dni>/
+    
+    NOTA: Este es un ejemplo básico. Debes adaptar esto según tu método de consulta a RENIEC:
+    
+    Opciones de integración:
+    1. API oficial de RENIEC (requiere autorización)
+    2. Servicio de terceros (APIs.net.pe, APIS Perú, etc.)
+    3. Base de datos local propia
+    
+    Respuesta esperada:
+    {
+        "success": true,
+        "nombres": "JUAN CARLOS",
+        "apellidoPaterno": "PEREZ",
+        "apellidoMaterno": "GARCIA",
+        "fechaNacimiento": "1995-05-15",  # Opcional
+        "dni": "12345678"
+    }
+    """
+    
+    # Validar formato de DNI
+    if not dni or len(dni) != 8 or not dni.isdigit():
+        return Response({
+            "success": False,
+            "message": "DNI inválido"
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # ================================================================
+        # OPCIÓN 1: API DE TERCEROS (EJEMPLO CON APIS.NET.PE)
+        # ================================================================
+        # NOTA: Necesitas registrarte y obtener un token en https://apis.net.pe/
+        
+        """
+        API_TOKEN = "tu_token_aqui"  # Obtenerlo de apis.net.pe
+        
+        response = requests.get(
+            f"https://api.apis.net.pe/v1/dni?numero={dni}",
+            headers={
+                "Authorization": f"Bearer {API_TOKEN}",
+                "Content-Type": "application/json"
+            },
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            return Response({
+                "success": True,
+                "nombres": data.get("nombres", ""),
+                "apellidoPaterno": data.get("apellidoPaterno", ""),
+                "apellidoMaterno": data.get("apellidoMaterno", ""),
+                "dni": dni
+            })
+        else:
+            return Response({
+                "success": False,
+                "message": "No se encontró información para este DNI"
+            }, status=status.HTTP_404_NOT_FOUND)
+        """
+        
+        # ================================================================
+        # OPCIÓN 2: API GRATUITA (EJEMPLO CON APIPERU.DEV)
+        # ================================================================
+        # NOTA: Esta API es de ejemplo y puede tener límites de uso
+        
+        """
+        response = requests.get(
+            f"https://apiperu.dev/api/dni/{dni}",
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success"):
+                return Response({
+                    "success": True,
+                    "nombres": data.get("data", {}).get("nombres", ""),
+                    "apellidoPaterno": data.get("data", {}).get("apellido_paterno", ""),
+                    "apellidoMaterno": data.get("data", {}).get("apellido_materno", ""),
+                    "dni": dni
+                })
+        
+        return Response({
+            "success": False,
+            "message": "No se encontró información"
+        }, status=status.HTTP_404_NOT_FOUND)
+        """
+        
+        # ================================================================
+        # OPCIÓN 3: SIMULACIÓN (PARA DESARROLLO/TESTING)
+        # ================================================================
+        # ⚠️ SOLO PARA PRUEBAS - ELIMINAR EN PRODUCCIÓN
+        
+        # DNIs de prueba
+        test_data = {
+            "12345678": {
+                "nombres": "JUAN CARLOS",
+                "apellidoPaterno": "PEREZ",
+                "apellidoMaterno": "GARCIA",
+                "fechaNacimiento": "1995-05-15"
+            },
+            "87654321": {
+                "nombres": "MARIA ELENA",
+                "apellidoPaterno": "RODRIGUEZ",
+                "apellidoMaterno": "LOPEZ",
+                "fechaNacimiento": "1998-08-20"
+            }
+        }
+        
+        if dni in test_data:
+            person_data = test_data[dni]
+            return Response({
+                "success": True,
+                "nombres": person_data["nombres"],
+                "apellidoPaterno": person_data["apellidoPaterno"],
+                "apellidoMaterno": person_data["apellidoMaterno"],
+                "fechaNacimiento": person_data.get("fechaNacimiento", ""),
+                "dni": dni
+            })
+        else:
+            # Simular persona con datos genéricos
+            return Response({
+                "success": True,
+                "nombres": "NOMBRE SIMULADO",
+                "apellidoPaterno": "APELLIDO",
+                "apellidoMaterno": "PATERNO",
+                "fechaNacimiento": "",
+                "dni": dni
+            })
+    
+    except requests.Timeout:
+        return Response({
+            "success": False,
+            "message": "Tiempo de espera agotado al consultar RENIEC"
+        }, status=status.HTTP_408_REQUEST_TIMEOUT)
+    
+    except requests.RequestException as e:
+        print(f"[RENIEC] Error en la consulta: {str(e)}")
+        return Response({
+            "success": False,
+            "message": "Error al consultar el servicio de RENIEC"
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    
+    except Exception as e:
+        print(f"[RENIEC] Error inesperado: {str(e)}")
+        return Response({
+            "success": False,
+            "message": "Error interno del servidor"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Register from './Register';
+import DNIAuth from './DNIAuth';
 import GoogleLoginButton from './GoogleLogin';
 import { authAPI } from '../services/Api';
 
@@ -22,6 +23,7 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
+    const [isDNIAuthOpen, setIsDNIAuthOpen] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -80,7 +82,7 @@ const Login = () => {
     };
 
     const loginRENIEC = () => {
-        alert('Función Proximamente');
+        setIsDNIAuthOpen(true);  // ← Abrir modal de DNIAuth
     };
 
     const loginPhone = () => {
@@ -237,6 +239,13 @@ const Login = () => {
             isOpen={isRegisterOpen} 
             onClose={closeRegisterModal} 
             />
+
+        <DNIAuth 
+            isOpen={isDNIAuthOpen} 
+            onClose={() => setIsDNIAuthOpen(false)} 
+        />
+
+        
         </>
        
     );

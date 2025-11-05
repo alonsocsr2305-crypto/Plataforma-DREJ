@@ -309,9 +309,9 @@ const DNIAuth = ({ isOpen, onClose }) => {
     // RENDERIZADO
     // ============================================
     return (
-        <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-active" onClick={onClose}>
             <div className="modal-content dni-auth-modal" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close" onClick={onClose}>×</button>
+                <button className="close-modal" onClick={onClose}>×</button>
                 
                 {/* ========== PASO 1: INGRESAR DNI ========== */}
                 {mode === 'input' && (

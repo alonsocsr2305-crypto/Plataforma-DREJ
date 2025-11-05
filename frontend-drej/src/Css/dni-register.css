@@ -326,13 +326,6 @@
     text-decoration: underline;
 }
 
-/* ========== AJUSTES GENERALES ========== */
-.dni-auth-modal {
-    max-width: 550px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
 /* Mejorar la transición entre modos */
 .modal-header {
     transition: all 0.3s ease;
@@ -359,4 +352,101 @@
 .rol-selection-step,
 .register-form {
     animation: fadeIn 0.3s ease;
+}
+
+/* ============================================
+   MODAL OVERLAY PARA DNIAuth - FORZADO
+============================================ */
+
+/* Overlay - Fondo oscuro que cubre toda la pantalla */
+.modal.active {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    z-index: 9999 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 20px !important;
+    overflow-y: auto !important;
+    margin: 0 !important;
+}
+
+/* Contenido del modal - Centrado */
+.modal.active .modal-content.dni-auth-modal {
+    position: relative !important;
+    background: white !important;
+    border-radius: 16px !important;
+    max-width: 550px !important;
+    width: 95% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+    animation: slideDown 0.3s ease !important;
+    z-index: 10000 !important;
+    margin: auto !important;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Botón cerrar - Siempre visible */
+.modal.active .close-modal,
+.modal.active .modal-close {
+    position: absolute !important;
+    top: 15px !important;
+    right: 20px !important;
+    background: transparent !important;
+    border: none !important;
+    color: #666 !important;
+    font-size: 28px !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+    transition: all 0.3s !important;
+    padding: 5px !important;
+    width: 30px !important;
+    height: 30px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10001 !important;
+}
+
+.modal.active .close-modal:hover,
+.modal.active .modal-close:hover {
+    color: #e74c3c !important;
+    transform: rotate(90deg) !important;
+}
+
+/* Subtítulo */
+.modal-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-top: 8px;
+    font-weight: normal;
+}
+
+/* Header del modal */
+.modal.active .modal-header {
+    padding: 24px 30px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.modal.active .modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #1f2937;
 }

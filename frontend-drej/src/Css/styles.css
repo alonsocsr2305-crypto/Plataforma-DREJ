@@ -62,7 +62,7 @@ textarea:focus {
     outline: none;
     background: #dce4e9;
     box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-}
+}s
 
 input.error {
     border: 2px solid #e74c3c;
@@ -71,23 +71,28 @@ input.error {
 
 /* Botones primarios */
 .btn-primary {
+    height: 39px;
     width: 100%;
-    padding: 14px;
+    padding: 10px 15px;
     border: none;
     border-radius: 8px;
-    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
     color: white;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-family: inherit;
+    font-family: 'Ligconsolata', monospace;
 }
 
 .btn-primary:hover {
     background: linear-gradient(135deg, #357abd 0%, #2868a8 100%);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+.btn-primary:hover:not(:disabled) {
+    background: #357ABD;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
 }
 
 .btn-primary:active {
@@ -206,23 +211,6 @@ label {
 .mb-3 { margin-bottom: 30px; }
 
 /* Scrollbar personalizado */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #4a90e2;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #357abd;
-}
 
 /* Animaciones */
 @keyframes fadeIn {

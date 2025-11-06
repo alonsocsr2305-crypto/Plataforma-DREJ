@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../Css/select-searchable.css';
 
 const SelectSearchable = ({ 
-    placeholder, 
-    value, 
-    onChange, 
     options = [], 
+    value = '', 
+    onChange, 
+    placeholder ='Buscar...', 
     name 
 }) => {
     const [isOpen, setIsOpen] = useState(false);

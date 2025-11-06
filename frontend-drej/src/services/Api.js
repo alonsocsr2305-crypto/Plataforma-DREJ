@@ -125,7 +125,7 @@ export const authAPI = {
   /**
    * Login con JWT (SimpleJWT)
    * @param {Object} credentials - Credenciales de acceso
-   * @param {string} credentials.username - DNI del usuario
+   * @param {string} credentials.username - DNI o Email del usuario
    * @param {string} credentials.password - Contraseña
    * @returns {Promise<Object>} Tokens de acceso y refresh
    */

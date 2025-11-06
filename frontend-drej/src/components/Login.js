@@ -104,6 +104,14 @@ const Login = () => {
     const closeRegisterModal = () => {
         setIsRegisterOpen(false);
     };
+
+    const openDNIAuthModal = () => {
+        setIsDNIAuthOpen(true);
+    }
+
+    const closeDNIAuthModal = () => {
+        setIsDNIAuthOpen(false);
+    }
     
     return (
         <>
@@ -160,7 +168,7 @@ const Login = () => {
                             id="loginEmail"
                             value={loginEmail}
                             onChange={(e) => setLoginEmail(e.target.value)}
-                            placeholder="Correo electrónico o usuario" 
+                            placeholder="Correo electrónico o DNI" 
                             required
                         />
                     </div>
@@ -190,7 +198,7 @@ const Login = () => {
                 <div className="auth-alternatives">
                     <button 
                         className="auth-button DNI-btn" 
-                        onClick={loginRENIEC}
+                        onClick={openDNIAuthModal}
                         type="button"
                     >
                         <img 
@@ -242,9 +250,8 @@ const Login = () => {
 
         <DNIAuth 
             isOpen={isDNIAuthOpen} 
-            onClose={() => setIsDNIAuthOpen(false)} 
+            onClose= {closeDNIAuthModal} 
         />
-
         
         </>
        

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { authAPI } from '../services/Api';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import SelectSearchable from './SelectSearchable';
+
 import '../Css/modal.css';
 
 const Register = ({ isOpen, onClose }) => {
@@ -712,7 +714,7 @@ const Register = ({ isOpen, onClose }) => {
 
     const isOrientador = formData.rol === "Orientador";
 
-    return (
+    return createPortal(
         <>
             {showSuccessModal && (
                 <div className="success-modal">
@@ -1047,7 +1049,8 @@ const Register = ({ isOpen, onClose }) => {
                     </div>
                 </div>
             </div>
-        </>
+        </>,
+        document.body
     );
 };
 

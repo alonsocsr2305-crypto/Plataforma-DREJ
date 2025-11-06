@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/Api';
 import { Eye, EyeOff, AlertCircle, CheckCircle, User, GraduationCap } from "lucide-react";
 import SelectSearchable from './SelectSearchable';
+
+import '../Css/styles.css';
 import '../Css/modal.css';
 import '../Css/dni-register.css';
 
@@ -121,7 +124,13 @@ const DNIAuth = ({ isOpen, onClose }) => {
             console.log('[DNI Auth] DNI no registrado, consultando RENIEC');
             
             // 2. Consultar RENIEC
+            /* 
             const reniecData = await fetch(`http://127.0.0.1:8000/api/reniec/consultar/${dni}/`)
+                .then(res => res.json()); 
+            */
+
+            // PRUEBAS (usa mock local):
+            const reniecData = await fetch(`http://127.0.0.1:8000/api/reniec/mock/${dni}/`)
                 .then(res => res.json());
 
             if (reniecData.success) {
@@ -258,6 +267,14 @@ const DNIAuth = ({ isOpen, onClose }) => {
                 inst => inst.InstiNombre === formData.institucion
             );
 
+            if (!institucionObj) {
+                setErrors({ institucion: 'Por favor selecciona una institución válida' });
+                setLoading(false);
+                return;
+            }
+
+            console.log('[DNI Auth] Institución seleccionada:', institucionObj);
+
             const payload = {
                 dni: dniData.dni,
                 first_name: dniData.nombres,
@@ -308,8 +325,8 @@ const DNIAuth = ({ isOpen, onClose }) => {
     // ============================================
     // RENDERIZADO
     // ============================================
-    return (
-        <div className="modal-active" onClick={onClose}>
+    return createPortal(
+        <div className="modal active" onClick={onClose}>
             <div className="modal-content dni-auth-modal" onClick={(e) => e.stopPropagation()}>
                 <button className="close-modal" onClick={onClose}>×</button>
                 
@@ -367,7 +384,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                         <form onSubmit={handleLogin} className="login-form">
                             <div className="dni-display">
                                 <CheckCircle size={20} color="green" />
-                                <strong>DNI: {dni}</strong>
+                                <span>¡¡Bienvenido <strong></strong>!!</span>
                             </div>
 
                             <div className="form-group password-wrapper">
@@ -408,7 +425,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                             </div>
 
                             <div className="forgot-password">
-                                <a href="#">¿Olvidaste tu contraseña?</a>
+                                <span>¿Olvidaste tu contraseña?</span>
                             </div>
                         </form>
                     </>
@@ -460,7 +477,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                                 onClick={() => setMode('input')}
                                 className="btn-secondary btn-block"
                             >
-                                ← Cambiar DNI
+                                Cambiar DNI
                             </button>
                         </div>
                     </>
@@ -640,7 +657,8 @@ const DNIAuth = ({ isOpen, onClose }) => {
                     </>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 

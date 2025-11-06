@@ -152,159 +152,162 @@ def validate_domain(request):
         'message': 'Dominio no permitido para orientadores'
     })
 
+#@api_view(['GET'])
+#@permission_classes([AllowAny])
+#def consultar_reniec(request, dni):
+    """
+    Consultar datos de una persona por DNI usando Factiliza API
+    """
+    from django.conf import settings
+    
+    if not dni or len(dni) != 8 or not dni.isdigit():
+        return Response({
+            "success": False,
+            "message": "DNI inválido. Debe tener 8 dígitos."
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        api_token = settings.FACTILIZA_API_TOKEN
+        
+        if not api_token:
+            logger.error("[FACTILIZA] Token de API no configurado")
+            return Response({
+                "success": False,
+                "message": "Servicio de consulta no configurado"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        url = f"https://api.factiliza.com/v1/dni/info/{dni}"
+        headers = {
+            "Authorization": f"Bearer {api_token}",
+            "Content-Type": "application/json"
+        }
+        
+        logger.info(f"[FACTILIZA] Consultando DNI: {dni}")
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            logger.info(f"[FACTILIZA] Consulta exitosa para DNI: {dni}")
+            
+            return Response({
+                "success": True,
+                "dni": dni,
+                "nombres": data.get("nombres", data.get("name", "")),
+                "apellidoPaterno": data.get("apellidoPaterno", data.get("paternal_surname", "")),
+                "apellidoMaterno": data.get("apellidoMaterno", data.get("maternal_surname", "")),
+                "fechaNacimiento": data.get("fechaNacimiento", data.get("birth_date", "")),
+            }, status=status.HTTP_200_OK)
+        
+        elif response.status_code == 404:
+            logger.warning(f"[FACTILIZA] DNI no encontrado: {dni}")
+            return Response({
+                "success": False,
+                "message": "No se encontró información para este DNI"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        elif response.status_code == 401:
+            logger.error("[FACTILIZA] Token inválido o expirado")
+            return Response({
+                "success": False,
+                "message": "Error de autenticación con el servicio"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        else:
+            logger.error(f"[FACTILIZA] Error de API: {response.status_code} - {response.text}")
+            return Response({
+                "success": False,
+                "message": "Error al consultar el servicio de identificación"
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    except requests.exceptions.Timeout:
+        logger.error(f"[FACTILIZA] Timeout al consultar DNI: {dni}")
+        return Response({
+            "success": False,
+            "message": "El servicio tardó demasiado en responder. Intenta nuevamente."
+        }, status=status.HTTP_504_GATEWAY_TIMEOUT)
+    
+    except requests.exceptions.ConnectionError:
+        logger.error(f"[FACTILIZA] Error de conexión al consultar DNI: {dni}")
+        return Response({
+            "success": False,
+            "message": "No se pudo conectar con el servicio de identificación"
+        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    
+    except Exception as e:
+        logger.error(f"[FACTILIZA] Error inesperado: {str(e)}", exc_info=True)
+        return Response({
+            "success": False,
+            "message": "Error interno del servidor" 
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def consultar_reniec(request, dni):
+def consultar_reniec_mock(request, dni):
     """
-    Consultar datos de una persona por DNI en RENIEC
+    MOCK para pruebas - Consultar DNI desde tabla local sin consumir API
     
-    GET /api/reniec/consultar/<dni>/
+    GET /api/reniec/mock/<dni>/
     
-    NOTA: Este es un ejemplo básico. Debes adaptar esto según tu método de consulta a RENIEC:
+    Usa esta ruta para pruebas y conserva tus 98 consultas de la API real.
+    """
     
-    Opciones de integración:
-    1. API oficial de RENIEC (requiere autorización)
-    2. Servicio de terceros (APIs.net.pe, APIS Perú, etc.)
-    3. Base de datos local propia
-    
-    Respuesta esperada:
-    {
-        "success": true,
-        "nombres": "JUAN CARLOS",
-        "apellidoPaterno": "PEREZ",
-        "apellidoMaterno": "GARCIA",
-        "fechaNacimiento": "1995-05-15",  # Opcional
-        "dni": "12345678"
+    # Base de datos de prueba con DNIs ficticios
+    DNIS_PRUEBA = {
+        '12345678': {
+            'nombres': 'JUAN CARLOS',
+            'apellidoPaterno': 'PEREZ',
+            'apellidoMaterno': 'GARCIA',
+            'fechaNacimiento': '1995-05-15'
+        },
+        '11111111': {
+            'nombres': 'MARIA ELENA',
+            'apellidoPaterno': 'RODRIGUEZ',
+            'apellidoMaterno': 'TORRES',
+            'fechaNacimiento': '1998-08-20'
+        },
+        '22222222': {
+            'nombres': 'PEDRO JOSE',
+            'apellidoPaterno': 'SANCHEZ',
+            'apellidoMaterno': 'LOPEZ',
+            'fechaNacimiento': '2000-01-10'
+        },
+        '33333333': {
+            'nombres': 'ANA SOFIA',
+            'apellidoPaterno': 'MARTINEZ',
+            'apellidoMaterno': 'DIAZ',
+            'fechaNacimiento': '1997-12-05'
+        },
+        '44444444': {
+            'nombres': 'CARLOS ALBERTO',
+            'apellidoPaterno': 'FERNANDEZ',
+            'apellidoMaterno': 'QUISPE',
+            'fechaNacimiento': '1999-03-25'
+        }
     }
-    """
     
     # Validar formato de DNI
     if not dni or len(dni) != 8 or not dni.isdigit():
         return Response({
             "success": False,
-            "message": "DNI inválido"
+            "message": "DNI inválido. Debe tener 8 dígitos."
         }, status=status.HTTP_400_BAD_REQUEST)
     
-    try:
-        # ================================================================
-        # OPCIÓN 1: API DE TERCEROS (EJEMPLO CON APIS.NET.PE)
-        # ================================================================
-        # NOTA: Necesitas registrarte y obtener un token en https://apis.net.pe/
-        
-        """
-        API_TOKEN = "tu_token_aqui"  # Obtenerlo de apis.net.pe
-        
-        response = requests.get(
-            f"https://api.apis.net.pe/v1/dni?numero={dni}",
-            headers={
-                "Authorization": f"Bearer {API_TOKEN}",
-                "Content-Type": "application/json"
-            },
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            return Response({
-                "success": True,
-                "nombres": data.get("nombres", ""),
-                "apellidoPaterno": data.get("apellidoPaterno", ""),
-                "apellidoMaterno": data.get("apellidoMaterno", ""),
-                "dni": dni
-            })
-        else:
-            return Response({
-                "success": False,
-                "message": "No se encontró información para este DNI"
-            }, status=status.HTTP_404_NOT_FOUND)
-        """
-        
-        # ================================================================
-        # OPCIÓN 2: API GRATUITA (EJEMPLO CON APIPERU.DEV)
-        # ================================================================
-        # NOTA: Esta API es de ejemplo y puede tener límites de uso
-        
-        """
-        response = requests.get(
-            f"https://apiperu.dev/api/dni/{dni}",
-            timeout=10
-        )
-        
-        if response.status_code == 200:
-            data = response.json()
-            if data.get("success"):
-                return Response({
-                    "success": True,
-                    "nombres": data.get("data", {}).get("nombres", ""),
-                    "apellidoPaterno": data.get("data", {}).get("apellido_paterno", ""),
-                    "apellidoMaterno": data.get("data", {}).get("apellido_materno", ""),
-                    "dni": dni
-                })
+    # Buscar en la base de datos de prueba
+    if dni in DNIS_PRUEBA:
+        data = DNIS_PRUEBA[dni]
+        logger.info(f"[MOCK] DNI encontrado en base de prueba: {dni}")
         
         return Response({
+            "success": True,
+            "dni": dni,
+            "nombres": data['nombres'],
+            "apellidoPaterno": data['apellidoPaterno'],
+            "apellidoMaterno": data['apellidoMaterno'],
+            "fechaNacimiento": data['fechaNacimiento'],
+        }, status=status.HTTP_200_OK)
+    else:
+        logger.warning(f"[MOCK] DNI no encontrado en base de prueba: {dni}")
+        return Response({
             "success": False,
-            "message": "No se encontró información"
+            "message": "DNI no encontrado en base de datos de prueba"
         }, status=status.HTTP_404_NOT_FOUND)
-        """
-        
-        # ================================================================
-        # OPCIÓN 3: SIMULACIÓN (PARA DESARROLLO/TESTING)
-        # ================================================================
-        # ⚠️ SOLO PARA PRUEBAS - ELIMINAR EN PRODUCCIÓN
-        
-        # DNIs de prueba
-        test_data = {
-            "12345678": {
-                "nombres": "JUAN CARLOS",
-                "apellidoPaterno": "PEREZ",
-                "apellidoMaterno": "GARCIA",
-                "fechaNacimiento": "1995-05-15"
-            },
-            "87654321": {
-                "nombres": "MARIA ELENA",
-                "apellidoPaterno": "RODRIGUEZ",
-                "apellidoMaterno": "LOPEZ",
-                "fechaNacimiento": "1998-08-20"
-            }
-        }
-        
-        if dni in test_data:
-            person_data = test_data[dni]
-            return Response({
-                "success": True,
-                "nombres": person_data["nombres"],
-                "apellidoPaterno": person_data["apellidoPaterno"],
-                "apellidoMaterno": person_data["apellidoMaterno"],
-                "fechaNacimiento": person_data.get("fechaNacimiento", ""),
-                "dni": dni
-            })
-        else:
-            # Simular persona con datos genéricos
-            return Response({
-                "success": True,
-                "nombres": "NOMBRE SIMULADO",
-                "apellidoPaterno": "APELLIDO",
-                "apellidoMaterno": "PATERNO",
-                "fechaNacimiento": "",
-                "dni": dni
-            })
-    
-    except requests.Timeout:
-        return Response({
-            "success": False,
-            "message": "Tiempo de espera agotado al consultar RENIEC"
-        }, status=status.HTTP_408_REQUEST_TIMEOUT)
-    
-    except requests.RequestException as e:
-        print(f"[RENIEC] Error en la consulta: {str(e)}")
-        return Response({
-            "success": False,
-            "message": "Error al consultar el servicio de RENIEC"
-        }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-    
-    except Exception as e:
-        print(f"[RENIEC] Error inesperado: {str(e)}")
-        return Response({
-            "success": False,
-            "message": "Error interno del servidor"
-        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

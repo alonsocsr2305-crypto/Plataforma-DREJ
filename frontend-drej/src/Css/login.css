@@ -73,7 +73,7 @@
 
 .logo-section {
     text-align: left;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     margin-top: 0;
 }
 
@@ -120,24 +120,24 @@
     padding: 10px 15px;
     border-radius: 8px;
     font-family: 'Ligconsolata', monospace;
-    background-color: #000000;
+    margin-bottom: -15px;
 }
 
 /* Divider "O" */
 
 .divider {
     text-align: center;
-    margin: 10px 0px;
-    position: relative;
+    margin: 6px 1px;
+    position: flex;
 }
 
 .divider::before,
 .divider::after {
     content: '';
     position: absolute;
-    top: 50%;
-    width: 42%;
-    height: 1.1px;
+    top: 50%;   
+    width: 46%;
+    height: 1px;
     background: #000000;
 }
 

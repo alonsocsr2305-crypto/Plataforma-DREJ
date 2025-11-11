@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import Register from './Register';
 import DNIAuth from './DNIAuth';
 import GoogleLoginButton from './GoogleLogin';
@@ -21,24 +22,118 @@ const Login = () => {
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const [errors, setErrors] = useState({
+        email: '',
+        password: '',
+        general: ''
+    });
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [isDNIAuthOpen, setIsDNIAuthOpen] = useState(false);
 
+    const [showPassword, setShowPassword] = useState(false);
+
+    const handleEmailChange = (e) => {
+        const value = e.target.value;
+        setLoginEmail(value);
+        
+        // Limpiar error al empezar a escribir
+        if (errors.email) {
+            setErrors({ ...errors, email: '' });
+        }
+    };
+
+    const handleEmailBlur = () => {
+        if (!loginEmail.trim()) {
+            setErrors({ ...errors, email: 'El email o DNI es obligatorio' });
+        } else {
+            // Validar formato (puede ser email o DNI)
+            const isDNI = /^\d{8}$/.test(loginEmail.trim());
+            const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim());
+            
+            if (!isDNI && !isEmail) {
+                setErrors({ 
+                    ...errors, 
+                    email: 'Ingresa un email válido o DNI de 8 dígitos' 
+                });
+            } else {
+                // Limpiar error si es válido
+                const newErrors = { ...errors };
+                delete newErrors.email;
+                setErrors(newErrors);
+            }
+        }
+    };
+
+    const handlePasswordChange = (e) => {
+        const value = e.target.value;
+        setLoginPassword(value);
+        
+        // Limpiar error al empezar a escribir
+        if (errors.password) {
+            setErrors({ ...errors, password: '' });
+        }
+    };
+
+    const handlePasswordBlur = () => {
+        if (!loginPassword) {
+            setErrors({ ...errors, password: 'La contraseña es obligatoria' });
+        } else if (loginPassword.length < 8) {
+            setErrors({ ...errors, password: 'La contraseña debe tener al menos 8 caracteres' });
+        } else {
+            // Limpiar error si es válido
+            const newErrors = { ...errors };
+            delete newErrors.password;
+            setErrors(newErrors);
+        }
+    };
+
+    const validateForm = () => {
+        const newErrors = {};
+        
+        // Validar email/DNI
+        if (!loginEmail.trim()) {
+            newErrors.email = 'El email o DNI es obligatorio';
+        } else {
+            const isDNI = /^\d{8}$/.test(loginEmail.trim());
+            const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail.trim());
+            
+            if (!isDNI && !isEmail) {
+                newErrors.email = 'Ingresa un email válido o DNI de 8 dígitos';
+            }
+        }
+        
+        // Validar contraseña
+        if (!loginPassword) {
+            newErrors.password = 'La contraseña es obligatoria';
+        } else if (loginPassword.length < 8) {
+            newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+        }
+        
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleLogin = async (e) => {
         e.preventDefault();
-        setError('');
+        setErrors({ email: '', password: '', general: '' });
+        
+        // Validación frontend antes de enviar
+        if (!validateForm()) {
+            console.error('[LOGIN] Errores de validación frontend:', errors);
+            return;
+        }
+        
         setLoading(true);
         
         console.log('🔐 [LOGIN] Iniciando proceso de login...');
-        console.log('📧 Email/Username:', loginEmail);
+        console.log('📧 Usuario:', loginEmail);
 
         try {
             // 1. Intentar login
             console.log('⏳ [LOGIN] Enviando credenciales al backend...');
             const loginResponse = await authAPI.login({ 
-                username: loginEmail, 
-                password: loginPassword 
+                username: loginEmail.trim(), 
+                password: loginPassword
             });
             console.log('✅ [LOGIN] Login exitoso:', loginResponse);
             
@@ -61,21 +156,137 @@ const Login = () => {
             
         } catch (err) {
             console.error('❌ [LOGIN] Error:', err);
-            console.error('📄 [LOGIN] Error completo:', err.response || err);
-            
-            if (err.response) {
-                const errorMsg = err.response.data.detail || 
-                                err.response.data.error || 
-                                'Credenciales incorrectas';
-                console.error('⚠️ [LOGIN] Mensaje de error:', errorMsg);
-                setError(errorMsg);
-            } else if (err.request) {
-                console.error('⚠️ [LOGIN] No se recibió respuesta del servidor');
-                setError('Error de conexión. Verifica que el backend esté corriendo en http://127.0.0.1:8000');
+            if (errors.response) {
+                // El servidor respondió con un código de error
+                const status = errors.response.status;
+                const errorsData = errors.response.data;
+                
+                console.error('[LOGIN] Error del servidor:', errorsData);
+                console.error('[LOGIN] Status:', status);
+                
+                if (status === 401) {
+                    // Credenciales incorrectas
+                    const errorMsg = errorsData?.detail || 
+                                   errorsData?.error || 
+                                   errorsData?.message ||
+                                   'Credenciales incorrectas';
+                    
+                    // Determinar si el error es del email/DNI o de la contraseña
+                    if (errorMsg.toLowerCase().includes('usuario') || 
+                        errorMsg.toLowerCase().includes('email') || 
+                        errorMsg.toLowerCase().includes('dni')) {
+                        setErrors({ 
+                            email: 'Usuario no encontrado. Verifica tu email o DNI.',
+                            password: '',
+                            general: '' 
+                        });
+                    } else if (errorMsg.toLowerCase().includes('contraseña') || 
+                               errorMsg.toLowerCase().includes('password')) {
+                        setErrors({ 
+                            email: '',
+                            password: 'Contraseña incorrecta. Intenta nuevamente.',
+                            general: '' 
+                        });
+                    } else {
+                        // Error general de autenticación
+                        setErrors({ 
+                            email: '',
+                            password: '',
+                            general: errorMsg 
+                        });
+                    }
+                    
+                } else if (status === 400) {
+                    // Errores de validación
+                    if (typeof errorsData === 'object') {
+                        const backendErrors = { general: '' };
+                        
+                        // Mapear errores del backend
+                        Object.keys(errorsData).forEach(field => {
+                            const message = Array.isArray(errorsData[field]) 
+                                ? errorsData[field][0] 
+                                : errorsData[field];
+                            
+                            if (field === 'username' || field === 'email') {
+                                backendErrors.email = message;
+                            } else if (field === 'password') {
+                                backendErrors.password = message;
+                            } else {
+                                backendErrors.general = message;
+                            }
+                        });
+                        
+                        setErrors(backendErrors);
+                    } else {
+                        setErrors({ 
+                            email: '',
+                            password: '',
+                            general: errorsData?.detail || 'Datos inválidos. Verifica tu información.' 
+                        });
+                    }
+                    
+                } else if (status === 403) {
+                    // Usuario bloqueado o sin permisos
+                    setErrors({ 
+                        email: '',
+                        password: '',
+                        general: 'Tu cuenta está bloqueada o sin permisos. Contacta al administrador.' 
+                    });
+                    
+                } else if (status === 429) {
+                    // Demasiados intentos
+                    setErrors({ 
+                        email: '',
+                        password: '',
+                        general: 'Demasiados intentos de login. Espera unos minutos e intenta nuevamente.' 
+                    });
+                    
+                } else if (status === 500) {
+                    // Error interno del servidor
+                    setErrors({ 
+                        email: '',
+                        password: '',
+                        general: 'Error del servidor. Por favor, intenta nuevamente más tarde.' 
+                    });
+                    
+                } else {
+                    // Otro código de error
+                    setErrors({ 
+                        email: '',
+                        password: '',
+                        general: `Error del servidor (${status}). Por favor, intenta nuevamente.` 
+                    });
+                }
+                
+            } else if (errors.request) {
+                // La petición fue enviada pero no se recibió respuesta
+                console.error('[LOGIN] Sin respuesta del servidor:', errors.request);
+                setErrors({ 
+                    email: '',
+                    password: '',
+                    general: '⚠️ No se pudo conectar con el servidor.\n\n' +
+                             '• Verifica tu conexión a internet\n' +
+                             '• Asegúrate de que el backend esté corriendo en http://127.0.0.1:8000' 
+                });
+                
             } else {
-                console.error('⚠️ [LOGIN] Error desconocido:', err.message);
-                setError('Error inesperado: ' + err.message);
+                // Error al configurar la petición
+                console.error('[LOGIN] Error de configuración:', errors.message);
+                setErrors({ 
+                    email: '',
+                    password: '',
+                    general: `Error inesperado: ${errors.message}` 
+                });
             }
+            
+            // Enfocar el primer campo con error
+            setTimeout(() => {
+                if (errors.email) {
+                    document.querySelector('input[name="loginEmail"]')?.focus();
+                } else if (errors.password) {
+                    document.querySelector('input[name="loginPassword"]')?.focus();
+                }
+            }, 100);
         } finally {
             setLoading(false);
         }
@@ -146,7 +357,7 @@ const Login = () => {
                     </div>
                 </div>
 
-                {error && (
+                {errors && (
                     <div style={{
                         padding: '12px',
                         marginBottom: '16px',
@@ -156,37 +367,92 @@ const Login = () => {
                         color: '#c62828',
                         fontSize: '14px'
                     }}>
-                        ⚠️ {error}
+                        ⚠️ {errors}
                     </div>
                 )}
 
                 {/* Formulario de Login */}
                 <form className="login-form" onSubmit={handleLogin}>
-                    <div className="form-group">
-                        <input 
-                            type="text" 
-                            id="loginEmail"
-                            value={loginEmail}
-                            onChange={(e) => setLoginEmail(e.target.value)}
-                            placeholder="Correo electrónico o DNI" 
-                            required
-                        />
+                    {errors.general && (
+                    <div className="alert alert-error">
+                        <AlertCircle size={20} />
+                        <span>{errors.general}</span>
                     </div>
+                )}
 
-                    <div className="form-group">
-                        <input 
-                            type="password" 
+                {/* Input de Email/DNI */}
+                <div className="form-group">
+                    <label htmlFor="loginEmail">Email o DNI</label>
+                    <input
+                        type="text"
+                        id="loginEmail"
+                        name="loginEmail"
+                        placeholder="ejemplo@mail.com o 12345678"
+                        value={loginEmail}
+                        onChange={handleEmailChange}
+                        onBlur={handleEmailBlur}
+                        className={errors.email ? 'input-error' : ''}
+                        required
+                        disabled={loading}
+                        autoComplete="username"
+                    />
+                    {errors.email && (
+                        <div className="error-message">
+                            <AlertCircle size={16} />
+                            <span>{errors.email}</span>
+                        </div>
+                    )}
+                </div>
+
+                {/* Input de Contraseña */}
+                <div className="form-group">
+                    <label htmlFor="loginPassword">Contraseña</label>
+                    <div className="password-input-wrapper">
+                        <input
+                            type={showPassword ? "text" : "password"}
                             id="loginPassword"
+                            name="loginPassword"
+                            placeholder="••••••••"
                             value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
-                            placeholder="Contraseña" 
+                            onChange={handlePasswordChange}
+                            onBlur={handlePasswordBlur}
+                            className={errors.password ? 'input-error' : ''}
                             required
+                            disabled={loading}
+                            autoComplete="current-password"
                         />
+                        <button
+                            type="button"
+                            className="toggle-password"
+                            onClick={() => setShowPassword(!showPassword)}
+                            tabIndex={-1}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                     </div>
+                    {errors.password && (
+                        <div className="error-message">
+                            <AlertCircle size={16} />
+                            <span>{errors.password}</span>
+                        </div>
+                    )}
+                </div>
 
-                    <button type="submit" className="btn-primary" disabled={loading}>
-                        {loading ? 'Iniciando sesión...': 'Iniciar Sesión'}
-                    </button>
+                {/* Botón de Login */}
+                <button 
+                    type="submit" 
+                    className="btn btn-primary btn-block"
+                    disabled={loading}
+                >
+                    {loading ? (
+                        <>
+                            <span className="spinner"></span>
+                            Iniciando sesión...
+                        </>
+                    ) : (
+                        'Iniciar Sesión'
+                    )}
+                </button>
                 </form>
 
                 {/* Divider */}

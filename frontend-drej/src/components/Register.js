@@ -425,6 +425,9 @@ const Register = ({ isOpen, onClose }) => {
         if (formData.telefono && !/^9\d{8}$/.test(formData.telefono.trim())) {
             newErrors.telefono = 'Teléfono inválido (debe empezar con 9 y tener 9 dígitos)';
         }
+        else if (!formData.telefono.trim()){
+            newErrors.telefono = 'Obligatorio';
+        }
         
         // Validación de edad
         if (!validateAge(formData.fechaNacimiento)) {
@@ -436,13 +439,20 @@ const Register = ({ isOpen, onClose }) => {
             newErrors.correo = 'Correo inválido';
         }
         
+        if(!formData.institucion.trim()){
+            newErrors.nombresInstituciones = 'Obligatorio';
+        }
+
         // Validación de contraseña
         if (formData.password.length < 8) {
             newErrors.password = 'Mínimo 8 caracteres';
         }
         
         // Validación de confirmación de contraseña
-        if (formData.password !== formData.passwordConfirm) {
+        if (!formData.passwordConfirm.trim()) {
+            newErrors.passwordConfirm = 'Obligatorio';
+        }
+        else if (formData.password !== formData.passwordConfirm) {
             newErrors.passwordConfirm = 'Las contraseñas no coinciden';
         }
         

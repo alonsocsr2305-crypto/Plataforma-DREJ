@@ -15,14 +15,12 @@ const SelectSearchable = ({
 
     // Filtrar opciones según búsqueda
     useEffect(() => {
-        // ← AGREGAR VALIDACIÓN AQUÍ
         if (!options || options.length === 0) {
             setFilteredOptions([]);
             return;
         }
 
         const filtered = options.filter(option => {
-            // ← VALIDAR QUE option existe y es string
             if (!option || typeof option !== 'string') {
                 return false;
             }

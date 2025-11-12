@@ -19,14 +19,11 @@ class RegisterView(APIView):
         data = request.data
         print("[DEBUG] Datos recibidos del frontend:", data)
 
-        required_common = ["email", "password", "passwordConfirm", "first_name", "last_name", "dni", "telefono"]
+        required_common = ["email", "password", "passwordConfirm", "nombres", "apellidoPaterno", "apellidoMaterno", "dni", "telefono", "fechaNacimiento", "insti_id"]
         missing = [k for k in required_common if not data.get(k) or not str(data.get(k)).strip()]
         rol = data.get("rol", "").strip()   
         
         if rol == "Orientador":
-            # Para orientadores SÍ es obligatorio el nombre de la institución
-            if not data.get("institucion") or not str(data.get("institucion")).strip():
-                missing.append("institucion")
             if not data.get("cargo") or not str(data.get("cargo")).strip():
                 missing.append("cargo")
             if not data.get("areaEspecializacion") or not str(data.get("areaEspecializacion")).strip():
@@ -99,6 +96,7 @@ class RegisterView(APIView):
         
         try:
             with transaction.atomic():
+                
                 # 1) Crea usuario
                 username = data["dni"]  # SimpleJWT usa 'username' por defecto
                 user = User.objects.create_user(
@@ -115,14 +113,14 @@ class RegisterView(APIView):
                     rol_estudiante = Rol.objects.get(RolID=2)
 
                     Estudiante.objects.create(
-                        EstudDNI= data.get("dni"),
+                        EstudDNI= dni,
                         EstudNombres=to_title_case(data.get("nombres", "")),
                         EstudApellidoPaterno=to_title_case(data.get("apellidoPaterno")),
                         EstudApellidoMaterno=to_title_case(data.get("apellidoMaterno")),
                         EstudFechaNac=data.get("fechaNacimiento"),  # DRF lo pasa como string compatible; tu campo es DATE
                         EstudTelefono=telefono,   # opcional si lo envías
                         User_id=user.id,       # usa columna UserID -> auth_user.id
-                        Insti_id=data.get("insti_id"),
+                        Insti_id=insti_id,
                         Rol_id=rol_estudiante.RolID
                     )
                     print(f"[DEBUG] Estudiante creado exitosamente: {dni}")
@@ -136,32 +134,24 @@ class RegisterView(APIView):
                     except EstadoVerificacion.DoesNotExist:
                         raise ValueError("Estado de verificación no encontrado")
                     
-                    institucion = data.get("institucion", "").strip()
+                    institucion_nombre = data.get("institucion", institucion.InstiNombre)
                     cargo = data.get("cargo", "").strip()
                     area_esp = data.get("areaEspecializacion", "").strip()
                     perfil = (data.get("perfilProfesional") or "").strip()
-                    insti_id = data.get("insti_id")
-                    #fch_veri = data.get("fecha_verificacion")
                     
                     print(f"[DEBUG] Institución: '{institucion}'")
                     print(f"[DEBUG] InstiID: {insti_id}")
                     print(f"[DEBUG] Cargo: '{cargo}'")
                     print(f"[DEBUG] Área Especialización: '{area_esp}'")
                     print(f"[DEBUG] Teléfono: '{telefono}'")
-
-                    if insti_id:
-                        try:
-                            InstitucionEducativa.objects.get(InstiID=insti_id)
-                        except InstitucionEducativa.DoesNotExist:
-                            raise ValueError("La institución seleccionada no existe")
-                    
+                  
                     orientador = Orientador.objects.create(
                         OrienDNI=dni,
                         OrienNombres=to_title_case(data.get("nombres")),
                         OrienApellidoPaterno=to_title_case(data.get("apellidoPaterno")),
                         OrienApellidoMaterno=to_title_case(data.get("apellidoMaterno")),
                         OrienFechaNacimiento=data.get("fechaNacimiento"),
-                        OrienInstitucion=to_title_case(institucion),
+                        OrienInstitucion=to_title_case(institucion_nombre),
                         OrienCargo=to_title_case(cargo),
                         OrienAreaEspecializacion=to_title_case(area_esp),
                         OrienEmailInstitucional=data["email"],
@@ -170,8 +160,8 @@ class RegisterView(APIView):
                         FechaRegistro=timezone.now(),
                         EstadoVerif_id=estado_pendiente.EstadoVerifID,
                         User_id=user.id,
-                        Insti_id=data.get("insti_id"),
-                        Rol_id=rol_orientador.RolID  # ✅ Asignar rol
+                        Insti_id=insti_id,
+                        Rol_id=rol_orientador.RolID
                     )
                     print(f"[DEBUG] Orientador creado exitosamente con ID: {orientador.OrienID}")
                     print(f"[DEBUG] FechaRegistro: {orientador.FechaRegistro}")

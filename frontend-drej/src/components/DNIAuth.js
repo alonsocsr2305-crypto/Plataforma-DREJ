@@ -12,32 +12,21 @@ import '../Css/dni-register.css';
 
 /**
  * Componente unificado que maneja TANTO login como registro con DNI
- * 
- * Flujo:
- * 1. Usuario ingresa DNI
- * 2. Sistema verifica si existe:
- *    - Si EXISTE → Pide contraseña y hace login
- *    - Si NO EXISTE → Continúa con registro (RENIEC → Rol → Formulario)
  */
 const DNIAuth = ({ isOpen, onClose }) => {
     const navigate = useNavigate();
     
-    // ============================================
-    // ESTADOS
-    // ============================================
     const [mode, setMode] = useState('input'); // input | login | register
     const [step, setStep] = useState(1); // Para registro: 1: RENIEC, 2: Rol, 3: Formulario
     const [dni, setDni] = useState('');
-    const [dniData, setDniData] = useState(null); // Datos de RENIEC
+    const [dniData, setDniData] = useState(null);
     const [selectedRol, setSelectedRol] = useState(null);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
     
-    // Estado para login
     const [loginPassword, setLoginPassword] = useState('');
     const [showLoginPassword, setShowLoginPassword] = useState(false);
     
-    // Estado para registro
     const [formData, setFormData] = useState({
         telefono: '',
         fechaNacimiento: '',
@@ -55,9 +44,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
 
-    // ============================================
-    // EFECTOS
-    // ============================================
     useEffect(() => {
         if (isOpen) {
             cargarInstituciones();
@@ -68,9 +54,11 @@ const DNIAuth = ({ isOpen, onClose }) => {
     const cargarInstituciones = async () => {
         try {
             const data = await institucionesAPI.listar();
+            console.log('[DNI Auth] Instituciones cargadas:', data.length);
             setInstituciones(data);
         } catch (error) {
             console.error('Error al cargar instituciones:', error);
+            setErrors(prev => ({ ...prev, general: 'Error al cargar instituciones' }));
         }
     };
 
@@ -96,9 +84,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
         setAcceptTerms(false);
     };
 
-    // ============================================
-    // PASO 1: VERIFICAR DNI (REGISTRADO O NUEVO)
-    // ============================================
     const handleVerifyDNI = async () => {
         if (dni.length !== 8 || !/^\d{8}$/.test(dni)) {
             setErrors({ dni: 'DNI debe tener 8 dígitos' });
@@ -109,27 +94,17 @@ const DNIAuth = ({ isOpen, onClose }) => {
         setErrors({});
 
         try {
-            // 1. Verificar si el DNI ya está registrado
             const dniCheck = await authAPI.checkDNI(dni);
             
             if (dniCheck.exists) {
-                // ✅ DNI YA REGISTRADO → Modo LOGIN
                 console.log('[DNI Auth] DNI ya registrado, cambiando a modo login');
                 setMode('login');
                 setLoading(false);
                 return;
             }
 
-            // ❌ DNI NO REGISTRADO → Modo REGISTRO
             console.log('[DNI Auth] DNI no registrado, consultando RENIEC');
             
-            // 2. Consultar RENIEC
-            /* 
-            const reniecData = await fetch(`http://127.0.0.1:8000/api/reniec/consultar/${dni}/`)
-                .then(res => res.json()); 
-            */
-
-            // PRUEBAS (usa mock local):
             const reniecData = await fetch(`http://127.0.0.1:8000/api/reniec/mock/${dni}/`)
                 .then(res => res.json());
 
@@ -142,7 +117,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                     fechaNacimiento: reniecData.fechaNacimiento || ''
                 });
                 setMode('register');
-                setStep(2); // Ir a selección de rol
+                setStep(2);
             } else {
                 setErrors({ dni: 'No se pudo verificar el DNI con RENIEC.' });
             }
@@ -154,9 +129,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
         }
     };
 
-    // ============================================
-    // MODO LOGIN: HACER LOGIN CON DNI + PASSWORD
-    // ============================================
     const handleLogin = async (e) => {
         e.preventDefault();
         
@@ -171,7 +143,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
         try {
             console.log('[DNI Auth] Intentando login con DNI:', dni);
             
-            // Login con DNI como username
             const loginResponse = await authAPI.login({ 
                 username: dni,
                 password: loginPassword 
@@ -179,11 +150,9 @@ const DNIAuth = ({ isOpen, onClose }) => {
             
             console.log('[DNI Auth] Login exitoso:', loginResponse);
             
-            // Obtener datos del usuario
             const userData = await authAPI.me();
             console.log('[DNI Auth] Datos del usuario:', userData);
             
-            // Cerrar modal y redirigir
             onClose();
             navigate('/dashboard');
             
@@ -198,20 +167,23 @@ const DNIAuth = ({ isOpen, onClose }) => {
         }
     };
 
-    // ============================================
-    // MODO REGISTRO: SELECCIONAR ROL
-    // ============================================
     const handleSelectRol = (rol) => {
         setSelectedRol(rol);
-        setStep(3); // Pasar al formulario completo
+        setStep(3);
     };
-
-    // ============================================
-    // MODO REGISTRO: COMPLETAR FORMULARIO Y REGISTRAR
-    // ============================================
+    
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        
+        // Limpiar error si existe
+        if (errors[name]) {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
+        }
     };
 
     const validateForm = () => {
@@ -257,8 +229,10 @@ const DNIAuth = ({ isOpen, onClose }) => {
     const handleRegister = async (e) => {
         e.preventDefault();
         
-        if (!validateForm()) return;
-
+        if (!validateForm()) {
+            console.log('[DNI Auth] Errores de validación:', errors);
+            return;
+        }
         setLoading(true);
         setErrors({});
 
@@ -268,33 +242,29 @@ const DNIAuth = ({ isOpen, onClose }) => {
             );
 
             if (!institucionObj) {
-                setErrors({ institucion: 'Por favor selecciona una institución válida' });
+                setErrors({ institucion: 'Por favor selecciona una institución válida de la lista' });
                 setLoading(false);
                 return;
             }
-
             console.log('[DNI Auth] Institución seleccionada:', institucionObj);
 
             const payload = {
                 dni: dniData.dni,
-                first_name: dniData.nombres,
-                last_name: `${dniData.apellidoPaterno} ${dniData.apellidoMaterno}`.trim(),
-                password: formData.password,
-                passwordConfirm: formData.passwordConfirm,
-                
                 nombres: dniData.nombres,
                 apellidoPaterno: dniData.apellidoPaterno,
                 apellidoMaterno: dniData.apellidoMaterno,
                 telefono: formData.telefono,
                 fechaNacimiento: formData.fechaNacimiento,
                 email: formData.correo,
+                password: formData.password,
+                passwordConfirm: formData.passwordConfirm,
                 rol: selectedRol,
                 insti_id: institucionObj.InstiID,
 
                 ...(selectedRol === "Orientador" && {
-                    institucion: institucionObj.InstiNombre || '',
+                    institucion: institucionObj.InstiNombre,
                     cargo: formData.cargo,
-                    areaEspecializacion: formData.areaEspecializacion || '',
+                    areaEspecializacion: formData.areaEspecializacion,
                     perfilProfesional: formData.perfilProfesional || null
                 })
             };
@@ -303,7 +273,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
             const res = await authAPI.register(payload);
             console.log('[DNI Auth] Registro exitoso:', res);
 
-            // Mostrar mensaje y cerrar
             alert(selectedRol === 'Orientador' 
                 ? 'Registro exitoso. Tu cuenta está pendiente de verificación.' 
                 : 'Registro exitoso. Ya puedes iniciar sesión.');
@@ -311,10 +280,21 @@ const DNIAuth = ({ isOpen, onClose }) => {
             onClose();
         } catch (error) {
             console.error('[DNI Auth] Error en registro:', error);
-            const errorMsg = error.response?.data?.detail || 
-                           error.response?.data?.message ||
-                           'Error al registrarse';
-            setErrors({ general: errorMsg });
+            if (error.response?.data) {
+                const errorData = error.response.data;
+                
+                if (typeof errorData === 'object') {
+                    // Si hay errores específicos de campos
+                    if (errorData.dni) setErrors(prev => ({ ...prev, dni: errorData.dni[0] || errorData.dni }));
+                    if (errorData.email) setErrors(prev => ({ ...prev, correo: errorData.email[0] || errorData.email }));
+                    if (errorData.telefono) setErrors(prev => ({ ...prev, telefono: errorData.telefono[0] || errorData.telefono }));
+                    if (errorData.detail) setErrors(prev => ({ ...prev, general: errorData.detail }));
+                } else {
+                    setErrors({ general: errorData });
+                }
+            } else {
+                setErrors({ general: 'Error al registrarse. Intenta de nuevo.' });
+            }
         } finally {
             setLoading(false);
         }
@@ -322,9 +302,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
 
     if (!isOpen) return null;
 
-    // ============================================
-    // RENDERIZADO
-    // ============================================
     return createPortal(
         <div className="modal active" onClick={onClose}>
             <div className="modal-content dni-auth-modal" onClick={(e) => e.stopPropagation()}>
@@ -373,7 +350,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                     </>
                 )}
 
-                {/* ========== MODO LOGIN: PEDIR CONTRASEÑA ========== */}
+                {/* ========== MODO LOGIN ========== */}
                 {mode === 'login' && (
                     <>
                         <div className="modal-header">
@@ -384,7 +361,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                         <form onSubmit={handleLogin} className="login-form">
                             <div className="dni-display">
                                 <CheckCircle size={20} color="green" />
-                                <span>¡¡Bienvenido <strong></strong>!!</span>
+                                <span>DNI: <strong>{dni}</strong></span>
                             </div>
 
                             <div className="form-group password-wrapper">
@@ -431,7 +408,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                     </>
                 )}
 
-                {/* ========== MODO REGISTRO: PASO 2 - SELECCIÓN DE ROL ========== */}
+                {/* ========== MODO REGISTRO: PASO 2 - ROL ========== */}
                 {mode === 'register' && step === 2 && dniData && (
                     <>
                         <div className="modal-header">
@@ -483,7 +460,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                     </>
                 )}
 
-                {/* ========== MODO REGISTRO: PASO 3 - FORMULARIO COMPLETO ========== */}
+                {/* ========== MODO REGISTRO: PASO 3 - FORMULARIO ========== */}
                 {mode === 'register' && step === 3 && (
                     <>
                         <div className="modal-header">
@@ -496,6 +473,14 @@ const DNIAuth = ({ isOpen, onClose }) => {
                                 <strong>{dniData.nombres} {dniData.apellidoPaterno}</strong>
                                 <span className="badge">{selectedRol}</span>
                             </div>
+
+                            {/* ✅ Banner de error general */}
+                            {errors.general && (
+                                <div className="error-box">
+                                    <AlertCircle size={16} />
+                                    <span>{errors.general}</span>
+                                </div>
+                            )}
 
                             {/* Campos Comunes */}
                             <div className="form-group">
@@ -520,11 +505,13 @@ const DNIAuth = ({ isOpen, onClose }) => {
                                 {errors.fechaNacimiento && <span className="error-text">{errors.fechaNacimiento}</span>}
                             </div>
 
+                            {/* ✅ CORREGIDO: SelectSearchable con prop name */}
                             <div className="form-group">
                                 <SelectSearchable
+                                    name="institucion"
                                     options={instituciones.map(inst => inst.InstiNombre)}
                                     value={formData.institucion}
-                                    onChange={(value) => setFormData(prev => ({ ...prev, institucion: value }))}
+                                    onChange={handleInputChange}
                                     placeholder="Selecciona tu institución *"
                                 />
                                 {errors.institucion && <span className="error-text">{errors.institucion}</span>}
@@ -628,13 +615,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
                                 </label>
                                 {errors.terms && <span className="error-text">{errors.terms}</span>}
                             </div>
-
-                            {errors.general && (
-                                <div className="error-box">
-                                    <AlertCircle size={16} />
-                                    <span>{errors.general}</span>
-                                </div>
-                            )}
 
                             <div className="form-actions">
                                 <button

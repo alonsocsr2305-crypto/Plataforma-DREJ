@@ -79,20 +79,16 @@ class RegisterView(APIView):
                 status=400
             )
         
-        rol_name = data.get("rol", "Estudiante")
+        insti_id = data.get("insti_id")
+        try:
+            institucion = InstitucionEducativa.objects.get(InstiID=insti_id)
+        except InstitucionEducativa.DoesNotExist:
+            return Response(
+                {"institucion": ["La institución seleccionada no existe"]},
+                status=400
+            )
         
-        # ✅ Validaciones específicas para ORIENTADOR
-        if rol_name == "Orientador":
-            required_orientador = ["cargo", "areaEspecializacion"]
-            missing_orientador = [k for k in required_orientador if not data.get(k) or not str(data.get(k)).strip()]
-            
-            if missing_orientador:
-                errors = {}
-                if "cargo" in missing_orientador:
-                    errors["cargo"] = ["El cargo es obligatorio"]
-                if "areaEspecializacion" in missing_orientador:
-                    errors["areaEspecializacion"] = ["El área de especialización es obligatoria"]
-                return Response(errors, status=400)
+        rol_name = data.get("rol", "Estudiante")
         
         try:
             with transaction.atomic():

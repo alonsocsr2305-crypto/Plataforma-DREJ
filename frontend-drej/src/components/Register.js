@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { authAPI } from '../services/Api';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import SelectSearchable from './SelectSearchable';
+import { ENDPOINTS } from '../configs/constants';
+import { institucionesAPI } from '../services/Api';
 
 import '../Css/modal.css';
 
@@ -46,21 +48,10 @@ const Register = ({ isOpen, onClose }) => {
 
     const cargarInstituciones = async () => {
         try {
-            // Llamar al endpoint que creaste en el backend
-            const response = await fetch('http://127.0.0.1:8000/api/instituciones/');
-            const data = await response.json();
-            console.log('Instituciones recibidas:', data); // ← DEBUG
-            
-            // ← IMPORTANTE: Asegurarse de que sea un array de strings
-            const nombresInstituciones = data.map(inst => inst.InstiNombre);
-            
-            console.log('Nombres procesados:', nombresInstituciones);
-            
+            const data = await institucionesAPI.listar();
             setInstituciones(data);
-            
         } catch (error) {
             console.error('Error al cargar instituciones:', error);
-            // Instituciones de respaldo si falla la API
             setInstituciones([
                 { InstitucionID: 1, InstitucionNombre: 'I.E. Santa Isabel' },
                 { InstitucionID: 2, InstitucionNombre: 'Colegio Salesiano Santa Rosa' },

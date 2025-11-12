@@ -50,3 +50,15 @@ Thumbs.db
 # Mac
 .AppleDouble
 .LSOverride
+
+# Variables de entorno
+.env
+.env.local
+.env.*.local
+*.env
+
+# Backend
+backend-drej/.env
+
+# Frontend
+frontend-drej/.env

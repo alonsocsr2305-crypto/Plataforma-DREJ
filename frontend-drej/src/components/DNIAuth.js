@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/Api';
 import { Eye, EyeOff, AlertCircle, CheckCircle, User, GraduationCap } from "lucide-react";
+import { institucionesAPI } from '../services/Api';
 import SelectSearchable from './SelectSearchable';
 
 import '../Css/styles.css';
@@ -66,8 +67,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
 
     const cargarInstituciones = async () => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/api/instituciones/');
-            const data = await response.json();
+            const data = await institucionesAPI.listar();
             setInstituciones(data);
         } catch (error) {
             console.error('Error al cargar instituciones:', error);

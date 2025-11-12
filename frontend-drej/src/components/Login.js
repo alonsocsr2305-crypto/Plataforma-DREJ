@@ -357,20 +357,7 @@ const Login = () => {
                     </div>
                 </div>
 
-                {errors && (
-                    <div style={{
-                        padding: '12px',
-                        marginBottom: '16px',
-                        backgroundColor: '#ffebee',
-                        border: '1px solid #ef5350',
-                        borderRadius: '8px',
-                        color: '#c62828',
-                        fontSize: '14px'
-                    }}>
-                        ⚠️ {errors}
-                    </div>
-                )}
-
+                
                 {/* Formulario de Login */}
                 <form className="login-form" onSubmit={handleLogin}>
                     {errors.general && (
@@ -382,17 +369,15 @@ const Login = () => {
 
                 {/* Input de Email/DNI */}
                 <div className="form-group">
-                    <label htmlFor="loginEmail">Email o DNI</label>
                     <input
                         type="text"
                         id="loginEmail"
                         name="loginEmail"
-                        placeholder="ejemplo@mail.com o 12345678"
+                        placeholder="Correo Electrónico o DNI"
                         value={loginEmail}
                         onChange={handleEmailChange}
                         onBlur={handleEmailBlur}
                         className={errors.email ? 'input-error' : ''}
-                        required
                         disabled={loading}
                         autoComplete="username"
                     />
@@ -406,7 +391,6 @@ const Login = () => {
 
                 {/* Input de Contraseña */}
                 <div className="form-group">
-                    <label htmlFor="loginPassword">Contraseña</label>
                     <div className="password-input-wrapper">
                         <input
                             type={showPassword ? "text" : "password"}
@@ -417,7 +401,6 @@ const Login = () => {
                             onChange={handlePasswordChange}
                             onBlur={handlePasswordBlur}
                             className={errors.password ? 'input-error' : ''}
-                            required
                             disabled={loading}
                             autoComplete="current-password"
                         />

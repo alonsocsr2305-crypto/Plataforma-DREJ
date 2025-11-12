@@ -16,7 +16,7 @@ def listar_instituciones(request):
     provincia = request.GET.get('provincia', None)
     
     if provincia:
-        instituciones = InstitucionEducativa.objects.filter(InstitucionProvincia=provincia)
+        instituciones = InstitucionEducativa.objects.filter(InstiProvincia=provincia)
     else:
         instituciones = InstitucionEducativa.objects.all()
     

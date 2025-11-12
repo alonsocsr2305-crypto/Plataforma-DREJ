@@ -304,7 +304,7 @@ export const getRefreshToken = () => {
 
 export const institucionesAPI = {
     listar: async (provincia = null) => {
-        let url = '/usuarios/instituciones/';
+        let url = '/api/instituciones/';
         if (provincia) {
             url += `?provincia=${provincia}`;
         }

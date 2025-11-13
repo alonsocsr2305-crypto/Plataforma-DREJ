@@ -524,7 +524,7 @@ const Register = ({ isOpen, onClose }) => {
             case 'telefono':
                 if (value && !/^9\d{8}$/.test(value.trim())) {
                     fieldErrors.telefono = 'Teléfono inválido (debe empezar con 9 y tener 9 dígitos)';
-                }
+                }break;
                 
             case 'fechaNacimiento':
                 if (!validateAge(value)) {

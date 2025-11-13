@@ -5,7 +5,7 @@ import Login from './components/Login';
 import Dashboard from './components/dashboard';
 
 import './Css/variables.css';
-import './Css/common.css';
+import './Css/commons.css';
 
 function App() {
   return (

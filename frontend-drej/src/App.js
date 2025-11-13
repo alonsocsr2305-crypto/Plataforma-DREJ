@@ -4,6 +4,9 @@ import './App.css';
 import Login from './components/Login';
 import Dashboard from './components/dashboard';
 
+import './Css/variables.css';
+import './Css/common.css';
+
 function App() {
   return (
     <BrowserRouter>

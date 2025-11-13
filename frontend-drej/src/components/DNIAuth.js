@@ -54,7 +54,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
     const cargarInstituciones = async () => {
         try {
             const data = await institucionesAPI.listar();
-            console.log('[DNI Auth] Instituciones cargadas:', data.length);
             setInstituciones(data);
         } catch (error) {
             console.error('Error al cargar instituciones:', error);
@@ -97,14 +96,11 @@ const DNIAuth = ({ isOpen, onClose }) => {
             const dniCheck = await authAPI.checkDNI(dni);
             
             if (dniCheck.exists) {
-                console.log('[DNI Auth] DNI ya registrado, cambiando a modo login');
                 setMode('login');
                 setLoading(false);
                 return;
             }
 
-            console.log('[DNI Auth] DNI no registrado, consultando RENIEC');
-            
             const reniecData = await fetch(`http://127.0.0.1:8000/api/reniec/mock/${dni}/`)
                 .then(res => res.json());
 
@@ -140,18 +136,13 @@ const DNIAuth = ({ isOpen, onClose }) => {
         setLoading(true);
         setErrors({});
 
-        try {
-            console.log('[DNI Auth] Intentando login con DNI:', dni);
-            
+        try {            
             const loginResponse = await authAPI.login({ 
                 username: dni,
                 password: loginPassword 
             });
-            
-            console.log('[DNI Auth] Login exitoso:', loginResponse);
-            
+                        
             const userData = await authAPI.me();
-            console.log('[DNI Auth] Datos del usuario:', userData);
             
             onClose();
             navigate('/dashboard');
@@ -230,7 +221,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
         e.preventDefault();
         
         if (!validateForm()) {
-            console.log('[DNI Auth] Errores de validación:', errors);
             return;
         }
         setLoading(true);
@@ -246,7 +236,6 @@ const DNIAuth = ({ isOpen, onClose }) => {
                 setLoading(false);
                 return;
             }
-            console.log('[DNI Auth] Institución seleccionada:', institucionObj);
 
             const payload = {
                 dni: dniData.dni,
@@ -269,9 +258,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                 })
             };
 
-            console.log('[DNI Auth] Registrando usuario:', payload);
             const res = await authAPI.register(payload);
-            console.log('[DNI Auth] Registro exitoso:', res);
 
             alert(selectedRol === 'Orientador' 
                 ? 'Registro exitoso. Tu cuenta está pendiente de verificación.' 

@@ -356,23 +356,19 @@
 ============================================ */
 
 /* Overlay - Fondo oscuro que cubre toda la pantalla */
-.modal.active {
-    display: flex !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: rgba(0, 0, 0, 0.6) !important;
-    z-index: 9999 !important;
-    justify-content: center !important;
-    align-items: center !important;
-    padding: 20px !important;
-    overflow-y: auto !important;
-    margin: 0 !important;
+body .dni-register-container .modal.active {
+    display: flex;
 }
+
+.modal-overlay.active {
+      position: fixed;
+      top: 0;
+      left: 0;
+  }
+
+.modal {
+      z-index: var(--z-index-modal);
+  }
 
 /* Contenido del modal - Centrado */
 .modal.active .modal-content.dni-auth-modal {
@@ -385,7 +381,7 @@
     overflow-y: auto !important;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
     animation: slideDown 0.3s ease !important;
-    z-index: 10000 !important;
+    z-index: var(--z-index-modal);
     margin: auto !important;
 }
 
@@ -419,7 +415,7 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    z-index: 10001 !important;
+    z-index: var(--z-index-modal);
 }
 
 .modal.active .close-modal:hover,

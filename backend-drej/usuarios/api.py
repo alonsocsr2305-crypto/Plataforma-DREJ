@@ -7,6 +7,9 @@ from django.db import transaction, IntegrityError
 from django.utils import timezone
 from .models import Estudiante, Orientador, EstadoVerificacion, Rol, InstitucionEducativa
 import re
+import logging
+logger = logging.getLogger(__name__)
+
 
 def to_title_case(text):
     """Convertir texto a Title Case (Primera letra mayúscula)"""
@@ -17,7 +20,7 @@ def to_title_case(text):
 class RegisterView(APIView):
     def post(self, request):
         data = request.data
-        print("[DEBUG] Datos recibidos del frontend:", data)
+        logger.debug("Datos recibidos del frontend: %s", data)
 
         required_common = ["email", "password", "passwordConfirm", "nombres", "apellidoPaterno", "apellidoMaterno", "dni", "telefono", "fechaNacimiento", "insti_id"]
         missing = [k for k in required_common if not data.get(k) or not str(data.get(k)).strip()]
@@ -119,7 +122,7 @@ class RegisterView(APIView):
                         Insti_id=insti_id,
                         Rol_id=rol_estudiante.RolID
                     )
-                    print(f"[DEBUG] Estudiante creado exitosamente: {dni}")
+                    logger.info("Estudiante creado exitosamente: %s", dni)
 
                 elif rol_name == "Orientador":
                     
@@ -135,11 +138,11 @@ class RegisterView(APIView):
                     area_esp = data.get("areaEspecializacion", "").strip()
                     perfil = (data.get("perfilProfesional") or "").strip()
                     
-                    print(f"[DEBUG] Institución: '{institucion}'")
-                    print(f"[DEBUG] InstiID: {insti_id}")
-                    print(f"[DEBUG] Cargo: '{cargo}'")
-                    print(f"[DEBUG] Área Especialización: '{area_esp}'")
-                    print(f"[DEBUG] Teléfono: '{telefono}'")
+                    logger.debug("Institución: %s", institucion)
+                    logger.debug("InstiID: %s", insti_id)
+                    logger.debug("Cargo: %s", cargo)
+                    logger.debug("ÁreaDeEspecialización: %s", area_esp)
+                    logger.debug("Teléfono: %s", telefono)
                   
                     orientador = Orientador.objects.create(
                         OrienDNI=dni,
@@ -159,8 +162,8 @@ class RegisterView(APIView):
                         Insti_id=insti_id,
                         Rol_id=rol_orientador.RolID
                     )
-                    print(f"[DEBUG] Orientador creado exitosamente con ID: {orientador.OrienID}")
-                    print(f"[DEBUG] FechaRegistro: {orientador.FechaRegistro}")
+                    logger.info("Orientador creado exitosamente con ID: %s", orientador.OrienID)
+                    logger.debug("FechaRegistro: %s", orientador.FechaRegistro)
 
         except Rol.DoesNotExist:
             return Response(
@@ -176,7 +179,7 @@ class RegisterView(APIView):
 
         except IntegrityError as e:
             error_msg = str(e)
-            print(f"[ERROR] IntegrityError: {error_msg}")
+            logger.error("IntegrityError: %s", error_msg)
             
             if "EstudDNI" in error_msg or "OrienDNI" in error_msg:
                 return Response(
@@ -195,9 +198,8 @@ class RegisterView(APIView):
                 )
 
         except Exception as e:
-            print(f"[ERROR] Excepción general: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            logger.error("Excepción general: %s", str(e), exc_info=True)
+            
             return Response(
                 {"detail": f"Error al registrar: {str(e)}"},
                 status=500

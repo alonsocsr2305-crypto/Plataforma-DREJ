@@ -114,7 +114,6 @@ export const authAPI = {
   async register(payload) {
         try {
             const { data } = await api.post("/api/auth/register/", payload);  // ← Cambiar aquí
-            console.log("[API] Registro exitoso:", data);
             return data;
         } catch (error) {
             console.error("[API] Error en registro:", error.response?.data || error.message);
@@ -135,7 +134,6 @@ export const authAPI = {
       if (data?.access) {
         localStorage.setItem(STORAGE.access, data.access);
         localStorage.setItem(STORAGE.refresh, data.refresh);
-        console.log("[API] Login exitoso");
       }
       return data;
     } catch (error) {
@@ -150,7 +148,6 @@ export const authAPI = {
   logout() {
     localStorage.removeItem(STORAGE.access);
     localStorage.removeItem(STORAGE.refresh);
-    console.log("[API] Logout exitoso");
   },
 
   /**

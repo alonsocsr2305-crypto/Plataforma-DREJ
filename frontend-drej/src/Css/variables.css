@@ -1,0 +1,6 @@
+:root {
+      --z-index-modal: 9999;
+      --z-index-overlay: 9998;
+      --primary-color: #4A90E2;
+      --border-radius: 8px;
+  }

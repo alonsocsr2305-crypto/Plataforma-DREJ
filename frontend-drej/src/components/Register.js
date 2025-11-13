@@ -642,16 +642,7 @@ const Register = ({ isOpen, onClose }) => {
                 })
             };
 
-            console.log('=== DEBUGGING ORIENTADOR ===');
-            console.log('formData.cargo:', formData.cargo);
-            console.log('formData.areaEspecializacion:', formData.areaEspecializacion);
-            console.log('formData.perfilProfesional:', formData.perfilProfesional);
-            console.log('Payload completo:', JSON.stringify(payload, null, 2));
-
-
-            console.log("[REGISTER] Enviando payload:", payload);
             const res = await authAPI.register(payload);
-            console.log("[REGISTER] Respuesta exitosa:", res);
 
             setShowSuccessModal(true);
             
@@ -679,7 +670,6 @@ const Register = ({ isOpen, onClose }) => {
             
             if (err.response && err.response.data) {
                 const errorData = err.response.data;
-                console.log('[REGISTER] Error data:', errorData);
                 
                 // Manejar diferentes formatos de error del backend
                 let errorMessage = '';

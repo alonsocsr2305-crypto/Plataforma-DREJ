@@ -125,34 +125,15 @@ const Login = () => {
         
         setLoading(true);
         
-        console.log('🔐 [LOGIN] Iniciando proceso de login...');
-        console.log('📧 Usuario:', loginEmail);
-
         try {
             // 1. Intentar login
-            console.log('⏳ [LOGIN] Enviando credenciales al backend...');
             const loginResponse = await authAPI.login({ 
                 username: loginEmail.trim(), 
                 password: loginPassword
             });
-            console.log('✅ [LOGIN] Login exitoso:', loginResponse);
             
             // 2. Verificar usuario autenticado
-            console.log('👤 [LOGIN] Obteniendo datos del usuario...');
             const userData = await authAPI.me();
-            console.log('✅ [LOGIN] Datos del usuario:', userData);
-            
-            // 3. Mostrar info en consola
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log('🎉 LOGIN EXITOSO');
-            console.log('Usuario:', userData.user);
-            console.log('Email:', userData.email);
-            console.log('Rol:', userData.rol?.rol_nombre || 'N/A');
-            console.log('Tipo:', userData.rol?.tipo_usuario || 'N/A');
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            
-            alert(`¡Bienvenido ${userData.first_name || userData.user}!\n\nRol: ${userData.rol?.rol_nombre}\nTipo: ${userData.rol?.tipo_usuario}`);
-            navigate('/dashboard');
             
         } catch (err) {
             console.error('❌ [LOGIN] Error:', err);

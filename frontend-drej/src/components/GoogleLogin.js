@@ -5,7 +5,6 @@ import { FcGoogle } from "react-icons/fc";
 const GoogleLoginButton = () => {
   const handleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => {
-      console.log("Login exitoso:", tokenResponse);
     },
     onError: (error) => {
       console.error("Error al iniciar sesión con Google", error);

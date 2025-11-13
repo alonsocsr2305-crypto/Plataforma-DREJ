@@ -15,10 +15,8 @@ const Dashboard = () => {
     }, []);
 
     const loadUserData = async () => {
-        console.log('📊 [DASHBOARD] Cargando datos del usuario...');
         try {
             const data = await authAPI.me();
-            console.log('✅ [DASHBOARD] Datos cargados:', data);
             setUserData(data);
         } catch (err) {
             console.error('❌ [DASHBOARD] Error al cargar datos:', err);
@@ -26,7 +24,6 @@ const Dashboard = () => {
             
             // Si hay error 401, redirigir al login
             if (err.response?.status === 401) {
-                console.log('🔄 [DASHBOARD] Token inválido, redirigiendo al login...');
                 authAPI.logout();
                 navigate('/');
             }
@@ -36,7 +33,6 @@ const Dashboard = () => {
     };
 
     const handleLogout = () => {
-        console.log('👋 [DASHBOARD] Cerrando sesión...');
         authAPI.logout();
         navigate('/');
     };

@@ -1,0 +1,57 @@
+/* Estilos comunes a todos los componentes */
+  
+  /* Botones */
+  .btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+  }
+  
+  .btn-primary {
+      background: #4A90E2;
+      color: white;
+      border: none;
+  }
+  
+  .btn-secondary {
+      background: #6c757d;
+      color: white;
+      border: none;
+  }
+  
+  /* Inputs */
+  .input-field {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+  }
+  
+  .input-error {
+      border-color: #dc3545;
+  }
+  
+  /* Modales */
+  .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+  }
+  
+  .modal-content {
+      background: white;
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 550px;
+      width: 95%;
+  }

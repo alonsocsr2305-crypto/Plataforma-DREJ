@@ -38,7 +38,7 @@
 }
 
 .modal.active {
-    display: flex !important;
+    display: flex;
 }
 
 /* Contenido del Modal - OPTIMIZADO */

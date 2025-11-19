@@ -376,8 +376,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                                     onClick={() => setMode('input')}
                                     className="btn-secondary"
                                     disabled={loading}
-                                >
-                                    ← Cambiar DNI
+                                >Cambiar DNI
                                 </button>
                                 <button
                                     type="submit"
@@ -609,9 +608,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                                     onClick={() => setStep(2)}
                                     className="btn-secondary"
                                     disabled={loading}
-                                >
-                                    ← Volver
-                                </button>
+                                >Volver</button>
                                 <button
                                     type="submit"
                                     className="btn-primary"

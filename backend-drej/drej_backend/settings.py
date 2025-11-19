@@ -154,3 +154,41 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 FACTILIZA_API_TOKEN = config('FACTILIZA_API_TOKEN', default='')
+
+# ============================================
+# CELERY CONFIGURATION
+# ============================================
+CELERY_BROKER_URL = 'amqp://admin:admin123@localhost:5672//'  # RabbitMQ
+CELERY_RESULT_BACKEND = 'rpc://'  # Resultados vía RabbitMQ
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'America/Lima'  # Ajustar a tu zona horaria
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutos máximo por tarea
+
+# Configuración de reintentos
+CELERY_TASK_ACKS_LATE = True  # Confirmar tarea solo después de completarse
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # Procesar una tarea a la vez
+
+# ============================================
+# EMAIL CONFIGURATION
+# ============================================
+# Para desarrollo (muestra emails en consola)
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Para producción con Gmail (comentar el anterior y descomentar esto)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'kingalonso2305@gmail.com'
+EMAIL_HOST_PASSWORD = 'lewi welv bhvp gmzb'  # Usar App Password de Gmail
+
+# Configuración general de email
+DEFAULT_FROM_EMAIL = 'VocaRed <noreply@vocared.com>'
+EMAIL_TIMEOUT = 10
+
+# URL del frontend para links de recuperación
+FRONTEND_URL = 'http://localhost:3000'  # Cambiar en producción
+PASSWORD_RESET_TIMEOUT = 3600  # 1 hora en segundos

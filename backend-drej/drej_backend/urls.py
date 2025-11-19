@@ -3,6 +3,11 @@ from django.http import JsonResponse
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from usuarios.api import RegisterView, MeView
 from django.contrib import admin
+from usuarios.password_reset_views import ( 
+solicitar_recuperacion_password,
+validar_token_reset,
+resetear_password
+)
 
 def home_view(request):
     return JsonResponse({
@@ -21,6 +26,9 @@ urlpatterns = [
     path("api/auth/token/", TokenObtainPairView.as_view()),
     path("api/auth/token/refresh/", TokenRefreshView.as_view()),
     path("api/auth/me/", MeView.as_view()),
+    path("api/auth/password-reset/request/", solicitar_recuperacion_password),
+    path("api/auth/password-reset/validate-token/", validar_token_reset),
+    path("api/auth/password-reset/confirm/", resetear_password),
     
     # Admin
     path('admin/', admin.site.urls),

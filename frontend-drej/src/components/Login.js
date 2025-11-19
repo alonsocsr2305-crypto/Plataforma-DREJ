@@ -133,7 +133,13 @@ const Login = () => {
             });
             
             // 2. Verificar usuario autenticado
+            console.log('👤 [LOGIN] Obteniendo datos del usuario...');
             const userData = await authAPI.me();
+            console.log('✅ [LOGIN] Datos del usuario:', userData);
+
+            // 3. Redirigir al dashboard
+            console.log('🚀 [LOGIN] Redireccionando a /dashboard...');
+            navigate('/dashboard');
             
         } catch (err) {
             console.error('❌ [LOGIN] Error:', err);

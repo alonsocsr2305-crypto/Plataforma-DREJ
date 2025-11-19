@@ -1,4 +1,7 @@
 # models.py
+import uuid
+from django.utils import timezone
+from datetime import timedelta
 from django.conf import settings
 from django.db import models
 
@@ -370,3 +373,98 @@ class FiltroRecomendacion(models.Model):
         db_table = 'tblFiltroRecomendacion'
         managed = False
         unique_together = (('Filtro', 'Recomendacion'),)
+
+
+class PasswordResetToken(models.Model):
+    """
+    Modelo para gestionar tokens de recuperación de contraseña.
+    
+    IMPORTANTE: managed=False porque la tabla se crea manualmente en SQL Server.
+    Ejecutar primero: CREATE_TABLE_PasswordResetToken.sql
+    """
+    
+    # Campos (deben coincidir exactamente con la tabla SQL Server)
+    id = models.AutoField(primary_key=True)
+    
+    # Foreign Key a auth_user
+    User = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        db_column='UserID',  # Nombre de columna en SQL Server
+        related_name='password_reset_tokens'
+    )
+    
+    token = models.UUIDField(
+        default=uuid.uuid4, 
+        editable=False, 
+        unique=True,
+        db_column='token'
+    )
+    
+    created_at = models.DateTimeField(
+        auto_now_add=False,  # Se maneja manualmente
+        db_column='created_at'
+    )
+    
+    used = models.BooleanField(
+        default=False,
+        db_column='used'
+    )
+    
+    used_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        db_column='used_at'
+    )
+    
+    class Meta:
+        db_table = 'tblPasswordResetToken'
+        managed = False  # ✅ CRÍTICO: Django no gestiona esta tabla
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Token para {self.User.username} - {'Usado' if self.used else 'Activo'}"
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save para establecer created_at si es nuevo registro
+        """
+        if not self.pk and not self.created_at:
+            self.created_at = timezone.now()
+        super().save(*args, **kwargs)
+    
+    def is_valid(self):
+        """
+        Verificar si el token es válido:
+        - No ha sido usado
+        - No ha expirado (1 hora desde creación)
+        """
+        if self.used:
+            return False
+        
+        expiration_time = self.created_at + timedelta(hours=1)
+        return timezone.now() < expiration_time
+    
+    def mark_as_used(self):
+        """Marcar el token como usado"""
+        self.used = True
+        self.used_at = timezone.now()
+        self.save()
+    
+    @classmethod
+    def create_token(cls, user):
+        """
+        Crear un nuevo token para el usuario.
+        Invalida tokens anteriores no usados del mismo usuario.
+        """
+        # Marcar como usados todos los tokens activos anteriores
+        cls.objects.filter(
+            User=user,
+            used=False
+        ).update(used=True, used_at=timezone.now())
+        
+        # Crear nuevo token
+        return cls.objects.create(
+            User=user,
+            created_at=timezone.now()
+        )

@@ -476,3 +476,45 @@ class PasswordResetToken(models.Model):
             User=user,
             created_at=timezone.now()
         )
+
+class Pregunta(models.Model):
+    PregID = models.AutoField(primary_key=True)
+    Cuest = models.ForeignKey(
+        Cuestionario,
+        on_delete=models.PROTECT,
+        db_column='CuestID'
+    )
+    PregTexto = models.TextField()
+    PregOrden = models.IntegerField()
+    PregTipo = models.CharField(max_length=50, default='multiple_choice')
+    PregCategoria = models.CharField(max_length=100, null=True, blank=True)
+    PregActiva = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = 'tblPregunta'
+        managed = False
+        ordering = ['PregOrden']
+
+    def __str__(self):
+        return f"P{self.PregOrden}: {self.PregTexto[:50]}"
+
+
+class Opcion(models.Model):
+    OpcionID = models.AutoField(primary_key=True)
+    Preg = models.ForeignKey(
+        Pregunta,
+        on_delete=models.PROTECT,
+        db_column='PregID',
+        related_name='opciones'
+    )
+    OpcionTexto = models.CharField(max_length=255)
+    OpcionValor = models.IntegerField()
+    OpcionOrden = models.IntegerField()
+
+    class Meta:
+        db_table = 'tblOpcion'
+        managed = False
+        ordering = ['OpcionOrden']
+
+    def __str__(self):
+        return f"{self.OpcionTexto} (Valor: {self.OpcionValor})"

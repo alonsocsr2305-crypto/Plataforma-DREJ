@@ -18,6 +18,17 @@ const Dashboard = () => {
         try {
             const data = await authAPI.me();
             setUserData(data);
+            
+            // ⭐ REDIRECCIÓN AUTOMÁTICA SEGÚN TIPO DE USUARIO
+            if (data.rol.tipo_usuario === 'Estudiante') {
+                console.log('🎓 Usuario es Estudiante, redirigiendo a dashboard específico...');
+                navigate('/estudiante/dashboard');
+                return;
+            }
+            
+            // Si es Orientador o Admin, se queda en este dashboard
+            console.log('👨‍🏫 Usuario es:', data.rol.tipo_usuario);
+            
         } catch (err) {
             console.error('❌ [DASHBOARD] Error al cargar datos:', err);
             setError('Error al cargar datos del usuario');
@@ -64,12 +75,15 @@ const Dashboard = () => {
         );
     }
 
+    // Dashboard para Orientadores y Administradores
     return (
         <div className="dashboard-container">
             <div className="dashboard-card">
                 {/* Header */}
                 <div className="dashboard-header">
-                    <h1 className="dashboard-title">🎉 Dashboard - Testing</h1>
+                    <h1 className="dashboard-title">
+                        {userData?.rol?.tipo_usuario === 'Orientador' ? '👨‍🏫' : '🎯'} Dashboard - {userData?.rol?.tipo_usuario}
+                    </h1>
                     <button onClick={handleLogout} className="logout-button">
                         Cerrar Sesión
                     </button>
@@ -77,7 +91,7 @@ const Dashboard = () => {
 
                 {/* Success Banner */}
                 <div className="success-banner">
-                    ✅ Conexión exitosa con el backend
+                    ✅ Bienvenido, {userData?.first_name}
                 </div>
 
                 {/* Información del Usuario */}
@@ -145,6 +159,10 @@ const Dashboard = () => {
                     </p>
                     <p className="footer-text">
                         🔐 Autenticación JWT activa
+                    </p>
+                    <p className="footer-text" style={{ marginTop: '12px', fontSize: '13px', color: '#95a5a6' }}>
+                        💡 Nota: Este dashboard es para {userData?.rol?.tipo_usuario}s. 
+                        {userData?.rol?.tipo_usuario === 'Orientador' && ' El dashboard específico de orientadores estará disponible próximamente.'}
                     </p>
                 </div>
             </div>

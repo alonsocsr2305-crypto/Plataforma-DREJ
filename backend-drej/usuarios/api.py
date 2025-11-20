@@ -5,7 +5,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db import transaction, IntegrityError
 from django.utils import timezone
-from .models import Estudiante, Orientador, EstadoVerificacion, Rol, InstitucionEducativa
+from .models import (
+    Estudiante, Orientador, EstadoVerificacion,
+    Rol, InstitucionEducativa
+)
+
+
 import re
 import logging
 logger = logging.getLogger(__name__)

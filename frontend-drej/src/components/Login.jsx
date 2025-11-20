@@ -117,16 +117,23 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         setErrors({ email: '', password: '', general: '' });
-        
-        // Validación frontend antes de enviar
-        if (!validateForm()) {
-            console.error('[LOGIN] Errores de validación frontend:', errors);
+
+        // Validaciones básicas
+        if (!loginEmail.trim()) {
+            setErrors(prev => ({ ...prev, email: 'El email o DNI es obligatorio' }));
             return;
         }
-        
+
+        if (!loginPassword) {
+            setErrors(prev => ({ ...prev, password: 'La contraseña es obligatoria' }));
+            return;
+        }
+
         setLoading(true);
-        
+
         try {
+            console.log('🔐 [LOGIN] Iniciando proceso de login...');
+            
             // 1. Intentar login
             const loginResponse = await authAPI.login({ 
                 username: loginEmail.trim(), 
@@ -138,26 +145,36 @@ const Login = () => {
             const userData = await authAPI.me();
             console.log('✅ [LOGIN] Datos del usuario:', userData);
 
-            // 3. Redirigir al dashboard
-            console.log('🚀 [LOGIN] Redireccionando a /dashboard...');
-            navigate('/dashboard');
+            // 3. ⭐ REDIRECCIÓN SEGÚN TIPO DE USUARIO
+            console.log('🎯 [LOGIN] Tipo de usuario:', userData.rol.tipo_usuario);
+            
+            if (userData.rol.tipo_usuario === 'Estudiante') {
+                console.log('🎓 [LOGIN] Redireccionando a dashboard de estudiante...');
+                navigate('/estudiante/dashboard');
+            } else if (userData.rol.tipo_usuario === 'Orientador') {
+                console.log('👨‍🏫 [LOGIN] Redireccionando a dashboard de orientador...');
+                navigate('/dashboard'); // Puede cambiarse a /orientador/dashboard cuando esté listo
+            } else {
+                console.log('🎯 [LOGIN] Redireccionando a dashboard general...');
+                navigate('/dashboard');
+            }
             
         } catch (err) {
             console.error('❌ [LOGIN] Error:', err);
-            if (errors.response) {
+            if (err.response) {
                 // El servidor respondió con un código de error
-                const status = errors.response.status;
-                const errorsData = errors.response.data;
+                const status = err.response.status;
+                const errorData = err.response.data;
                 
-                console.error('[LOGIN] Error del servidor:', errorsData);
+                console.error('[LOGIN] Error del servidor:', errorData);
                 console.error('[LOGIN] Status:', status);
                 
                 if (status === 401) {
                     // Credenciales incorrectas
-                    const errorMsg = errorsData?.detail || 
-                                   errorsData?.error || 
-                                   errorsData?.message ||
-                                   'Credenciales incorrectas';
+                    const errorMsg = errorData?.detail || 
+                                errorData?.error || 
+                                errorData?.message ||
+                                'Credenciales incorrectas';
                     
                     // Determinar si el error es del email/DNI o de la contraseña
                     if (errorMsg.toLowerCase().includes('usuario') || 
@@ -169,112 +186,49 @@ const Login = () => {
                             general: '' 
                         });
                     } else if (errorMsg.toLowerCase().includes('contraseña') || 
-                               errorMsg.toLowerCase().includes('password')) {
+                            errorMsg.toLowerCase().includes('password')) {
                         setErrors({ 
                             email: '',
                             password: 'Contraseña incorrecta. Intenta nuevamente.',
                             general: '' 
                         });
                     } else {
-                        // Error general de autenticación
                         setErrors({ 
                             email: '',
                             password: '',
                             general: errorMsg 
                         });
                     }
-                    
-                } else if (status === 400) {
-                    // Errores de validación
-                    if (typeof errorsData === 'object') {
-                        const backendErrors = { general: '' };
-                        
-                        // Mapear errores del backend
-                        Object.keys(errorsData).forEach(field => {
-                            const message = Array.isArray(errorsData[field]) 
-                                ? errorsData[field][0] 
-                                : errorsData[field];
-                            
-                            if (field === 'username' || field === 'email') {
-                                backendErrors.email = message;
-                            } else if (field === 'password') {
-                                backendErrors.password = message;
-                            } else {
-                                backendErrors.general = message;
-                            }
-                        });
-                        
-                        setErrors(backendErrors);
-                    } else {
-                        setErrors({ 
-                            email: '',
-                            password: '',
-                            general: errorsData?.detail || 'Datos inválidos. Verifica tu información.' 
-                        });
-                    }
-                    
-                } else if (status === 403) {
-                    // Usuario bloqueado o sin permisos
-                    setErrors({ 
-                        email: '',
-                        password: '',
-                        general: 'Tu cuenta está bloqueada o sin permisos. Contacta al administrador.' 
-                    });
-                    
-                } else if (status === 429) {
-                    // Demasiados intentos
-                    setErrors({ 
-                        email: '',
-                        password: '',
-                        general: 'Demasiados intentos de login. Espera unos minutos e intenta nuevamente.' 
-                    });
-                    
                 } else if (status === 500) {
-                    // Error interno del servidor
                     setErrors({ 
                         email: '',
                         password: '',
-                        general: 'Error del servidor. Por favor, intenta nuevamente más tarde.' 
+                        general: 'Error del servidor. Intenta más tarde.' 
                     });
-                    
                 } else {
-                    // Otro código de error
                     setErrors({ 
                         email: '',
                         password: '',
-                        general: `Error del servidor (${status}). Por favor, intenta nuevamente.` 
+                        general: errorData?.detail || errorData?.error || 'Error al iniciar sesión' 
                     });
                 }
-                
-            } else if (errors.request) {
-                // La petición fue enviada pero no se recibió respuesta
-                console.error('[LOGIN] Sin respuesta del servidor:', errors.request);
+            } else if (err.request) {
+                // La petición se hizo pero no hubo respuesta
+                console.error('[LOGIN] No hay respuesta del servidor');
                 setErrors({ 
                     email: '',
                     password: '',
-                    general: '⚠️ No se pudo conectar con el servidor.\n\n' +
-                             '• Verifica tu conexión a internet\n' +
-                             '• Asegúrate de que el backend esté corriendo en http://127.0.0.1:8000' 
+                    general: 'No se pudo conectar con el servidor. Verifica tu conexión.' 
                 });
-                
             } else {
                 // Error al configurar la petición
-                console.error('[LOGIN] Error de configuración:', errors.message);
+                console.error('[LOGIN] Error al configurar la petición:', err.message);
                 setErrors({ 
                     email: '',
                     password: '',
-                    general: `Error inesperado: ${errors.message}` 
+                    general: 'Error inesperado. Intenta nuevamente.' 
                 });
             }
-            
-            // Enfocar el primer campo con error
-            setTimeout(() => {
-                if (errors.email) {
-                    document.querySelector('input[name="loginEmail"]')?.focus();
-                } else if (errors.password) {
-                    document.querySelector('input[name="loginPassword"]')?.focus();
-                }
-            }, 100);
         } finally {
             setLoading(false);
         }

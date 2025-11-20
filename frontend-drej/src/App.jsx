@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
+import EstudianteDashboard from './components/EstudianteDashboard.jsx';
 import Login from './components/Login.jsx';
 import Dashboard from './components/dashboard.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
@@ -15,6 +16,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/estudiante/dashboard" element={<EstudianteDashboard />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>

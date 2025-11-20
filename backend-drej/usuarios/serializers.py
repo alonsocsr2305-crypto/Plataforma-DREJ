@@ -3,6 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.db import models, connection
 from .models import Estudiante, Orientador, DominioPermitido, Rol, InstitucionEducativa
+from .models import Cuestionario, Pregunta, Opcion, Intento, Respuesta, Recomendacion, EstadoIntento
 from datetime import datetime
 
 
@@ -219,6 +220,203 @@ class InstitucionSerializer(serializers.ModelSerializer):
         model = InstitucionEducativa
         fields = ['InstiID', 'InstiNombre', 'InstiDireccion', 'InstiDistrito',
                   'InstiProvincia', 'InstiRegion']
+        
+class OpcionSerializer(serializers.ModelSerializer):
+    """Serializer para las opciones de respuesta"""
+    class Meta:
+        model = Opcion
+        fields = ['OpcionID', 'OpcionTexto', 'OpcionValor', 'OpcionOrden']
+
+
+class PreguntaSerializer(serializers.ModelSerializer):
+    """Serializer para preguntas con sus opciones"""
+    opciones = OpcionSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Pregunta
+        fields = [
+            'PregID', 
+            'PregTexto', 
+            'PregOrden', 
+            'PregTipo', 
+            'PregCategoria',
+            'opciones'
+        ]
+
+
+class CuestionarioSerializer(serializers.ModelSerializer):
+    """Serializer básico para cuestionarios"""
+    total_preguntas = serializers.SerializerMethodField()
+    duracion_estimada = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Cuestionario
+        fields = [
+            'CuestID', 
+            'CuestNombre', 
+            'CuestVersion', 
+            'CuestActivo',
+            'total_preguntas',
+            'duracion_estimada'
+        ]
+    
+    def get_total_preguntas(self, obj):
+        """Contar preguntas activas del cuestionario"""
+        return Pregunta.objects.filter(Cuest=obj, PregActiva=True).count()
+    
+    def get_duracion_estimada(self, obj):
+        """Estimar duración basado en número de preguntas (30 seg por pregunta)"""
+        total = self.get_total_preguntas(obj)
+        minutos = (total * 30) // 60  # 30 segundos por pregunta
+        return f"{minutos}-{minutos + 5} min"
+
+
+class CuestionarioDetalleSerializer(serializers.ModelSerializer):
+    """Serializer completo con preguntas y opciones"""
+    preguntas = PreguntaSerializer(many=True, read_only=True, source='pregunta_set')
+    
+    class Meta:
+        model = Cuestionario
+        fields = [
+            'CuestID', 
+            'CuestNombre', 
+            'CuestVersion', 
+            'preguntas'
+        ]
+
+
+class IntentoSerializer(serializers.ModelSerializer):
+    """Serializer para intentos de cuestionarios"""
+    cuestionario_nombre = serializers.CharField(source='Cuest.CuestNombre', read_only=True)
+    estado_descripcion = serializers.CharField(source='Estado.EstadoDescripcion', read_only=True)
+    
+    class Meta:
+        model = Intento
+        fields = [
+            'IntentID',
+            'cuestionario_nombre',
+            'estado_descripcion',
+            'Confirmado',
+            'Creado',
+            'UltimoAutosave'
+        ]
+
+
+class RespuestaSerializer(serializers.ModelSerializer):
+    """Serializer para respuestas individuales"""
+    class Meta:
+        model = Respuesta
+        fields = ['RespID', 'Intent', 'RespValor', 'RespFechaHora']
+
+
+class RecomendacionSerializer(serializers.ModelSerializer):
+    """Serializer para recomendaciones de carreras"""
+    class Meta:
+        model = Recomendacion
+        fields = [
+            'RecomendacionID',
+            'Carrera',
+            'Descripcion',
+            'Score',
+            'Nivel',
+            'FechaHora'
+        ]
+
+
+class CrearIntentoSerializer(serializers.Serializer):
+    """Serializer para crear un nuevo intento"""
+    cuestionario_id = serializers.IntegerField()
+    
+    def validate_cuestionario_id(self, value):
+        """Validar que el cuestionario exista y esté activo"""
+        try:
+            cuestionario = Cuestionario.objects.get(CuestID=value, CuestActivo=True)
+        except Cuestionario.DoesNotExist:
+            raise serializers.ValidationError("Cuestionario no encontrado o inactivo")
+        return value
+    
+    def create(self, validated_data):
+        """Crear un nuevo intento para el estudiante"""
+        user = self.context['request'].user
+        
+        # Obtener el estudiante
+        try:
+            estudiante = Estudiante.objects.get(User=user)
+        except Estudiante.DoesNotExist:
+            raise serializers.ValidationError("Usuario no es un estudiante")
+        
+        # Obtener el cuestionario y estado
+        cuestionario = Cuestionario.objects.get(CuestID=validated_data['cuestionario_id'])
+        estado_en_progreso = EstadoIntento.objects.get(EstadoID=1)  # Asumiendo 1 = "En Progreso"
+        
+        # Crear el intento
+        intento = Intento.objects.create(
+            Estud=estudiante,
+            Cuest=cuestionario,
+            Estado=estado_en_progreso,
+            Confirmado=False,
+            Creado=datetime.now(),
+            UltimoAutosave=None
+        )
+        
+        return intento
+
+
+class GuardarRespuestasSerializer(serializers.Serializer):
+    """Serializer para guardar respuestas del cuestionario"""
+    intento_id = serializers.IntegerField()
+    respuestas = serializers.ListField(
+        child=serializers.DictField(
+            child=serializers.CharField()
+        )
+    )
+    confirmar = serializers.BooleanField(default=False)
+    
+    def validate_intento_id(self, value):
+        """Validar que el intento exista"""
+        try:
+            intento = Intento.objects.get(IntentID=value)
+            # Verificar que el intento pertenezca al usuario actual
+            user = self.context['request'].user
+            estudiante = Estudiante.objects.get(User=user)
+            if intento.Estud.EstudID != estudiante.EstudID:
+                raise serializers.ValidationError("No tienes permiso para este intento")
+        except Intento.DoesNotExist:
+            raise serializers.ValidationError("Intento no encontrado")
+        return value
+    
+    def save(self):
+        """Guardar las respuestas"""
+        from django.db import transaction
+        
+        intento = Intento.objects.get(IntentID=self.validated_data['intento_id'])
+        respuestas_data = self.validated_data['respuestas']
+        confirmar = self.validated_data['confirmar']
+        
+        with transaction.atomic():
+            # Eliminar respuestas anteriores si existen
+            Respuesta.objects.filter(Intent=intento).delete()
+            
+            # Crear nuevas respuestas
+            for resp_data in respuestas_data:
+                Respuesta.objects.create(
+                    Intent=intento,
+                    RespValor=resp_data.get('valor'),
+                    RespFechaHora=datetime.now()
+                )
+            
+            # Actualizar autosave
+            intento.UltimoAutosave = datetime.now()
+            
+            # Si se confirma, cambiar estado
+            if confirmar:
+                estado_completado = EstadoIntento.objects.get(EstadoID=2)  # Asumiendo 2 = "Completado"
+                intento.Estado = estado_completado
+                intento.Confirmado = True
+            
+            intento.save()
+        
+        return intento
 
 # Importar Q para las consultas
 from django.db import models

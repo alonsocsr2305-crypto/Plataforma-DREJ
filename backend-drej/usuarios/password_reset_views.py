@@ -104,7 +104,7 @@ def validar_token_reset(request):
     
     try:
         # Buscar token
-        reset_token = PasswordResetToken.objects.select_related('user').filter(
+        reset_token = PasswordResetToken.objects.select_related('User').filter(
             token=token_str
         ).first()
         
@@ -124,7 +124,7 @@ def validar_token_reset(request):
         return Response({
             'valid': True,
             'message': 'Token válido',
-            'user_email': reset_token.user.email
+            'user_email': reset_token.User.email
         }, status=status.HTTP_200_OK)
     
     except Exception as e:
@@ -185,7 +185,7 @@ def resetear_password(request):
     
     try:
         # Buscar token
-        reset_token = PasswordResetToken.objects.select_related('user').filter(
+        reset_token = PasswordResetToken.objects.select_related('User').filter(
             token=token_str
         ).first()
         
@@ -203,7 +203,7 @@ def resetear_password(request):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Actualizar contraseña
-        user = reset_token.user
+        user = reset_token.User
         user.set_password(new_password)
         user.save()
         

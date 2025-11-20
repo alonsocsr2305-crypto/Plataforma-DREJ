@@ -394,15 +394,14 @@ class PasswordResetToken(models.Model):
         related_name='password_reset_tokens'
     )
     
-    token = models.UUIDField(
-        default=uuid.uuid4, 
-        editable=False, 
+    token = models.CharField(
+        max_length=36,
         unique=True,
+        editable=False,
         db_column='token'
     )
     
     created_at = models.DateTimeField(
-        auto_now_add=False,  # Se maneja manualmente
         db_column='created_at'
     )
     
@@ -429,8 +428,16 @@ class PasswordResetToken(models.Model):
         """
         Override save para establecer created_at si es nuevo registro
         """
-        if not self.pk and not self.created_at:
-            self.created_at = timezone.now()
+        # Si es nuevo registro
+        if not self.pk:
+            # Generar UUID como string si no existe
+            if not self.token:
+                self.token = str(uuid.uuid4())
+            
+            # Establecer fecha de creación si no existe
+            if not self.created_at:
+                self.created_at = timezone.now()
+        
         super().save(*args, **kwargs)
     
     def is_valid(self):
@@ -464,6 +471,7 @@ class PasswordResetToken(models.Model):
         ).update(used=True, used_at=timezone.now())
         
         # Crear nuevo token
+        # Django generará el UUID automáticamente en save()
         return cls.objects.create(
             User=user,
             created_at=timezone.now()

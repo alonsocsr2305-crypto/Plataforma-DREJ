@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import Register from './Register';
@@ -287,14 +288,6 @@ const Login = () => {
         alert('Función Proximamente');
     };
 
-    const forgotPassword = (e) => {
-        e.preventDefault();
-        const email = prompt('Ingresa tu correo:');
-        if (email) {
-            alert(`Enlace enviado a: ${email}`);
-        }
-    };
-
     const openRegisterModal = () => {
         setIsRegisterOpen(true);
     };
@@ -463,9 +456,9 @@ const Login = () => {
 
                 {/* Olvidaste tu contraseña */}
                 <div className="forgot-password">
-                    <a href="#" onClick={forgotPassword}>
+                    <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
                         ¿Olvidaste tu contraseña?
-                    </a>
+                    </Link>
                 </div>
 
                 {/* Botón de Registro */}

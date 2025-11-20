@@ -1,38 +1,50 @@
 import { useState, useEffect } from 'react';
-import { ENDPOINTS } from '../config/constants';
-import { logger } from '../utils/logger';
+import { institucionesAPI } from '../services/Api';
 
-export const useInstituciones = (provincia = null) => {
+/**
+ * Hook para manejar la carga de instituciones educativas
+ * 
+ * @returns {Object} { instituciones, loading, error, reload }
+ * - instituciones: Array de instituciones
+ * - loading: Boolean indicando si está cargando
+ * - error: String con mensaje de error (null si no hay error)
+ * - reload: Función para recargar las instituciones manualmente
+ */
+export const useInstituciones = () => {
     const [instituciones, setInstituciones] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    useEffect(() => {
-        cargarInstituciones();
-    }, [provincia]);
 
     const cargarInstituciones = async () => {
         setLoading(true);
         setError(null);
         
         try {
-            let url = ENDPOINTS.INSTITUCIONES;
-            if (provincia) url += `?provincia=${provincia}`;
-            
-            const response = await fetch(url);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
-            const data = await response.json();
-            logger.log('[useInstituciones] Cargadas:', data.length);
+            const data = await institucionesAPI.listar();
             setInstituciones(data);
         } catch (err) {
-            const errorMsg = 'Error al cargar instituciones';
-            logger.error('[useInstituciones]', err);
-            setError(errorMsg);
+            console.error('Error al cargar instituciones:', err);
+            setError('Error al cargar instituciones');
+            
+            // Fallback con datos mock si falla la API
+            setInstituciones([
+                { InstitucionID: 1, InstiNombre: 'I.E. Santa Isabel' },
+                { InstitucionID: 2, InstiNombre: 'Colegio Salesiano Santa Rosa' },
+                { InstitucionID: 3, InstiNombre: 'I.E. Politécnico Regional del Centro' },
+            ]);
         } finally {
             setLoading(false);
         }
     };
 
-    return { instituciones, loading, error, reload: cargarInstituciones };
+    useEffect(() => {
+        cargarInstituciones();
+    }, []);
+
+    return { 
+        instituciones, 
+        loading, 
+        error,
+        reload: cargarInstituciones // Por si necesitas recargar manualmente
+    };
 };

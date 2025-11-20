@@ -5,6 +5,10 @@ import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
 import SelectSearchable from './SelectSearchable.jsx';
 import { ENDPOINTS } from '../configs/constants';
 import { institucionesAPI } from '../services/Api';
+import { useInstituciones } from '../hooks/useInstituciones';
+import { usePasswordStrength } from '../hooks/usePasswordStrength';
+import { useEmailValidation } from '../hooks/useEmailValidation';
+import { useDNIValidation } from '../hooks/useDNIValidation';
 
 import '../Css/modal.css';
 
@@ -32,33 +36,13 @@ const Register = ({ isOpen, onClose }) => {
     const [errors, setErrors] = useState({});
     const [acceptTerms, setAcceptTerms] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [strength, setStrength] = useState({ level: 0, label: '' });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-    const [emailValidation, setEmailValidation] = useState({ valid: null, message: '' });
-    const [dniValidation, setDniValidation] = useState({ checking: false, available: null });
     const [emailChecking, setEmailChecking] = useState(false);
-    const [instituciones, setInstituciones] = useState([]);
-
-    useEffect(() => {
-        if (isOpen) {
-            cargarInstituciones();
-        }
-    }, [isOpen]);
-
-    const cargarInstituciones = async () => {
-        try {
-            const data = await institucionesAPI.listar();
-            setInstituciones(data);
-        } catch (error) {
-            console.error('Error al cargar instituciones:', error);
-            setInstituciones([
-                { InstitucionID: 1, InstitucionNombre: 'I.E. Santa Isabel' },
-                { InstitucionID: 2, InstitucionNombre: 'Colegio Salesiano Santa Rosa' },
-                { InstitucionID: 3, InstitucionNombre: 'I.E. María Inmaculada' },
-            ]);
-        }
-    };
+    const { instituciones } = useInstituciones();
+    const strength = usePasswordStrength(formData.password);
+    const emailValidation = useEmailValidation(formData.correo, formData.correo.length > 0);
+    const dniValidation = useDNIValidation(formData.dni, formData.dni.length > 0);
 
     const dominiosPermitidos = [
         'continental.edu.pe',
@@ -103,18 +87,18 @@ const Register = ({ isOpen, onClose }) => {
         
         // Solo validar si tiene 8 dígitos
         if (dni.length !== 8) {
-            setDniValidation({ checking: false, available: null });
+            useDNIValidation({ checking: false, available: null });
             return;
         }
 
-        setDniValidation({ checking: true, available: null });
+        useDNIValidation({ checking: true, available: null });
         
         try {
             const result = await authAPI.checkDNI(dni);
             
             if (result.exists) {
                 setErrors(prev => ({ ...prev, dni: 'Este DNI ya está registrado' }));
-                setDniValidation({ checking: false, available: false });
+                useDNIValidation({ checking: false, available: false });
             } else {
                 // Limpiar error si existía
                 setErrors(prev => {
@@ -122,11 +106,11 @@ const Register = ({ isOpen, onClose }) => {
                     delete newErrors.dni;
                     return newErrors;
                 });
-                setDniValidation({ checking: false, available: true });
+                useDNIValidation({ checking: false, available: true });
             }
         } catch (error) {
             console.error('[DNI Check] Error:', error);
-            setDniValidation({ checking: false, available: null });
+            useDNIValidation({ checking: false, available: null });
         }
     };
 
@@ -149,7 +133,7 @@ const Register = ({ isOpen, onClose }) => {
             
             if (emailExists.exists) {
                 setErrors(prev => ({ ...prev, correo: 'Este email ya está registrado' }));
-                setEmailValidation({ valid: false});
+                useEmailValidation({ valid: false});
                 setEmailChecking(false);
                 return;
             }
@@ -159,7 +143,7 @@ const Register = ({ isOpen, onClose }) => {
                 const domainResult = await authAPI.validateDomain(email);
                 
                 if (domainResult.valid) {
-                    setEmailValidation({
+                    useEmailValidation({
                         valid: true,
                         message: `✓ Email institucional válido${domainResult.institucion ? ` (${domainResult.institucion})` : ''}`
                     });
@@ -170,7 +154,7 @@ const Register = ({ isOpen, onClose }) => {
                         return newErrors;
                     });
                 } else {
-                    setEmailValidation({
+                    useEmailValidation({
                         valid: false,
                         message: '✗ Debe usar un email institucional (.edu, .edu.pe, .ac.pe, etc.)'
                     });
@@ -181,7 +165,7 @@ const Register = ({ isOpen, onClose }) => {
                 }
             } else {
                 // Estudiante - email disponible
-                setEmailValidation({ valid: true});
+                useEmailValidation({ valid: true});
                 setErrors(prev => {
                     const newErrors = { ...prev };
                     delete newErrors.correo;
@@ -190,7 +174,7 @@ const Register = ({ isOpen, onClose }) => {
             }
         } catch (error) {
             console.error('[Email Check] Error:', error);
-            setEmailValidation({ valid: null, message: '' });
+            useEmailValidation({ valid: null, message: '' });
         } finally {
             setEmailChecking(false);
         }
@@ -206,7 +190,7 @@ const Register = ({ isOpen, onClose }) => {
         
         // Si cambia a estudiante, limpiar validación de email institucional
         if (newRol === 'Estudiante') {
-            setEmailValidation({ valid: null, message: '' });
+            useEmailValidation({ valid: null, message: '' });
             // Limpiar error de email si era de dominio institucional
             if (errors.correo?.includes('institucional')) {
                 setErrors(prev => {
@@ -222,28 +206,6 @@ const Register = ({ isOpen, onClose }) => {
         }
     };
 
-    const evaluatePasswordStrength = (password) => {
-        let score = 0;
-        if (!password) return { level: 0, label: '' };
-        
-        // Puntuación por longitud (más granular)
-        if (password.length >= 8) score += 1;
-        if (password.length >= 10) score += 1;
-        if (password.length >= 12) score += 1;
-        if (password.length >= 14) score += 1;
-        
-        // Puntuación por complejidad
-        if (/[a-z]/.test(password)) score += 1;        // minúsculas
-        if (/[A-Z]/.test(password)) score += 1;        // mayúsculas
-        if (/\d/.test(password)) score += 1;           // números
-        if (/[^A-Za-z0-9]/.test(password)) score += 2; // caracteres especiales (vale doble)
-
-        // Score máximo = 10
-        if (score <= 3) return { level: 1, label: 'Débil' };
-        if (score <= 5) return { level: 2, label: 'Media' };
-        if (score <= 7) return { level: 3, label: 'Buena' };
-        return { level: 4, label: 'Fuerte' };
-    };
 
     const validarDominioEmail = (email) => {
         if (!email || !email.includes('@')) return false;
@@ -336,20 +298,20 @@ const Register = ({ isOpen, onClose }) => {
         const val = type === "checkbox" ? checked : value;
         setFormData((prev) => ({ ...prev, [name]: val }));
 
-        if (name === "password") setStrength(evaluatePasswordStrength(val));
+        if (name === "password") usePasswordStrength(strength(val));
 
         // Validar email en tiempo real para orientadores
         if (name === "correo" && formData.rol === "Orientador") {
             if (value && value.includes('@')) {
                 const esValido = validarDominioEmail(value);
-                setEmailValidation({
+                useEmailValidation({
                     valid: esValido,
                     message: esValido 
                         ? '✓ Email institucional válido' 
                         : '✗ Debe usar un email institucional (.edu, .edu.pe, .ac.pe, etc.)'
                 });
             } else {
-                setEmailValidation({ valid: null, message: '' });
+                useEmailValidation({ valid: null, message: '' });
             }
         }
 
@@ -362,11 +324,9 @@ const Register = ({ isOpen, onClose }) => {
                 areaEspecializacion: '',
                 perfilProfesional: ''
             }));
-            setEmailValidation({ valid: null, message: '' });
+            useEmailValidation({ valid: null, message: '' });
         }
     };
-
-    const validateDNI = (dni) => /^\d{8}$/.test(dni.trim());
 
     const validateAge = (birthdate) => {
         if (!birthdate) return false;
@@ -408,7 +368,7 @@ const Register = ({ isOpen, onClose }) => {
         }
         
         // Validación DNI
-        if (!validateDNI(formData.dni)) {
+        if (!useDNIValidation(formData.dni)) {
             newErrors.dni = 'DNI inválido (8 dígitos)';
         }
         
@@ -515,7 +475,7 @@ const Register = ({ isOpen, onClose }) => {
                 break;
                 
             case 'dni':
-                if (!validateDNI(value)) {
+                if (!useDNIValidation(value)) {
                     fieldErrors.dni = 'DNI inválido (8 dígitos)';
                 }
                 // No llamar handleDNIBlur aquí porque ya tiene su propio handler
@@ -656,8 +616,8 @@ const Register = ({ isOpen, onClose }) => {
                 areaEspecializacion: '', perfilProfesional: ''
             });
             setAcceptTerms(false);
-            setStrength({ level: 0, label: '' });
-            setEmailValidation({ valid: null, message: '' });
+            strength({ level: 0, label: '' });
+            useEmailValidation({ valid: null, message: '' });
 
             setTimeout(() => {
                 setShowSuccessModal(false);

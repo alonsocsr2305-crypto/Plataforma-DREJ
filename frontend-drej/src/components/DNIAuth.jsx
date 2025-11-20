@@ -5,6 +5,8 @@ import { authAPI } from '../services/Api';
 import { Eye, EyeOff, AlertCircle, CheckCircle, User, GraduationCap } from "lucide-react";
 import { institucionesAPI } from '../services/Api';
 import SelectSearchable from './SelectSearchable.jsx';
+import { useInstituciones } from '../hooks/useInstituciones';
+import { usePasswordStrength } from '../hooks/usePasswordStrength';
 
 import '../Css/styles.css';
 import '../Css/modal.css';
@@ -39,27 +41,17 @@ const DNIAuth = ({ isOpen, onClose }) => {
         perfilProfesional: ''
     });
     
-    const [instituciones, setInstituciones] = useState([]);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [acceptTerms, setAcceptTerms] = useState(false);
+    const { instituciones } = useInstituciones();
+    const strength = usePasswordStrength(formData.password);
 
     useEffect(() => {
         if (isOpen) {
-            cargarInstituciones();
             resetForm();
         }
     }, [isOpen]);
-
-    const cargarInstituciones = async () => {
-        try {
-            const data = await institucionesAPI.listar();
-            setInstituciones(data);
-        } catch (error) {
-            console.error('Error al cargar instituciones:', error);
-            setErrors(prev => ({ ...prev, general: 'Error al cargar instituciones' }));
-        }
-    };
 
     const resetForm = () => {
         setMode('input');

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
-import Register from './Register';
-import DNIAuth from './DNIAuth';
-import GoogleLoginButton from './GoogleLogin';
+import Register from './Register.jsx';
+import DNIAuth from './DNIAuth.jsx';
+import GoogleLoginButton from './GoogleLogin.jsx';
 import { authAPI } from '../services/Api';
 
 import '../Css/styles.css';

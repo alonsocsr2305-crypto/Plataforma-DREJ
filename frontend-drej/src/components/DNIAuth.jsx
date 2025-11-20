@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/Api';
 import { Eye, EyeOff, AlertCircle, CheckCircle, User, GraduationCap } from "lucide-react";
 import { institucionesAPI } from '../services/Api';
-import SelectSearchable from './SelectSearchable';
+import SelectSearchable from './SelectSearchable.jsx';
 
 import '../Css/styles.css';
 import '../Css/modal.css';

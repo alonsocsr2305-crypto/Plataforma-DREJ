@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { authAPI } from '../services/Api';
 import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
-import SelectSearchable from './SelectSearchable';
+import SelectSearchable from './SelectSearchable.jsx';
 import { ENDPOINTS } from '../configs/constants';
 import { institucionesAPI } from '../services/Api';
 

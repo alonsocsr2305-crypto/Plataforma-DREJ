@@ -128,53 +128,25 @@ const Register = ({ isOpen, onClose }) => {
         setEmailChecking(true);
         
         try {
-            // 1. Verificar si el email ya existe
-            const emailExists = await authAPI.checkEmail(email);
             
-            if (emailExists.exists) {
-                setErrors(prev => ({ ...prev, correo: 'Este email ya está registrado' }));
-                useEmailValidation({ valid: false});
-                setEmailChecking(false);
-                return;
-            }
-
-            // 2. Si es orientador, validar dominio institucional
             if (formData.rol === 'Orientador') {
-                const domainResult = await authAPI.validateDomain(email);
+                const esValido = validarDominioEmail(email);
                 
-                if (domainResult.valid) {
-                    useEmailValidation({
-                        valid: true,
-                        message: `✓ Email institucional válido${domainResult.institucion ? ` (${domainResult.institucion})` : ''}`
-                    });
-                    // Limpiar error si existía
+                if (esValido) {
                     setErrors(prev => {
                         const newErrors = { ...prev };
                         delete newErrors.correo;
                         return newErrors;
                     });
                 } else {
-                    useEmailValidation({
-                        valid: false,
-                        message: '✗ Debe usar un email institucional (.edu, .edu.pe, .ac.pe, etc.)'
-                    });
                     setErrors(prev => ({ 
                         ...prev, 
                         correo: 'Debe usar un email institucional válido' 
                     }));
                 }
-            } else {
-                // Estudiante - email disponible
-                useEmailValidation({ valid: true});
-                setErrors(prev => {
-                    const newErrors = { ...prev };
-                    delete newErrors.correo;
-                    return newErrors;
-                });
             }
         } catch (error) {
             console.error('[Email Check] Error:', error);
-            useEmailValidation({ valid: null, message: '' });
         } finally {
             setEmailChecking(false);
         }
@@ -190,7 +162,6 @@ const Register = ({ isOpen, onClose }) => {
         
         // Si cambia a estudiante, limpiar validación de email institucional
         if (newRol === 'Estudiante') {
-            useEmailValidation({ valid: null, message: '' });
             // Limpiar error de email si era de dominio institucional
             if (errors.correo?.includes('institucional')) {
                 setErrors(prev => {
@@ -297,35 +268,6 @@ const Register = ({ isOpen, onClose }) => {
         const { name, value, type, checked } = e.target;
         const val = type === "checkbox" ? checked : value;
         setFormData((prev) => ({ ...prev, [name]: val }));
-
-        if (name === "password") usePasswordStrength(strength(val));
-
-        // Validar email en tiempo real para orientadores
-        if (name === "correo" && formData.rol === "Orientador") {
-            if (value && value.includes('@')) {
-                const esValido = validarDominioEmail(value);
-                useEmailValidation({
-                    valid: esValido,
-                    message: esValido 
-                        ? '✓ Email institucional válido' 
-                        : '✗ Debe usar un email institucional (.edu, .edu.pe, .ac.pe, etc.)'
-                });
-            } else {
-                useEmailValidation({ valid: null, message: '' });
-            }
-        }
-
-        // Limpiar campos de orientador si cambia a estudiante
-        if (name === "rol" && value === "Estudiante") {
-            setFormData(prev => ({
-                ...prev,
-                institucion: '',
-                cargo: '',
-                areaEspecializacion: '',
-                perfilProfesional: ''
-            }));
-            useEmailValidation({ valid: null, message: '' });
-        }
     };
 
     const validateAge = (birthdate) => {
@@ -617,7 +559,6 @@ const Register = ({ isOpen, onClose }) => {
             });
             setAcceptTerms(false);
             strength({ level: 0, label: '' });
-            useEmailValidation({ valid: null, message: '' });
 
             setTimeout(() => {
                 setShowSuccessModal(false);
@@ -944,9 +885,9 @@ const Register = ({ isOpen, onClose }) => {
                                 {formData.password && (
                                     <>
                                         <div className="password-strength-bar">
-                                            <div className={`strength-level strength-${strength.level}`}></div>
+                                            <div className={`strength-level strength-${strength.score}`}></div>
                                         </div>
-                                        <span className={`strength-label strength-${strength.level}`}>
+                                        <span className={`strength-label strength-${strength.score}`}>
                                             {strength.label}
                                         </span>
                                     </>

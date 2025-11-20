@@ -9,54 +9,47 @@ import { useState, useEffect } from 'react';
  * - label: String descriptivo ('Muy débil', 'Débil', 'Media', 'Fuerte', 'Muy fuerte')
  */
 export const usePasswordStrength = (password) => {
-    const [strength, setStrength] = useState({ level: 0, label: '' });
+    const [strength, setStrength] = useState({ score: 0, label: '' });
 
     useEffect(() => {
         if (!password) {
-            setStrength({ level: 0, label: '' });
+            setStrength({ score: 0, label: '' });
             return;
         }
 
-        let level = 0;
+        let score = 0;
         
         // Longitud mínima
-        if (password.length >= 8) level++;
-        if (password.length >= 12) level++;
+        if (password.length >= 8) score += 1;
+        if (password.length >= 10) score += 1;
+        if (password.length >= 13) score += 1;
+        if (password.length >= 15) score += 1;
         
         // Contiene minúsculas
-        if (/[a-z]/.test(password)) level++;
-        
-        // Contiene mayúsculas
-        if (/[A-Z]/.test(password)) level++;
-        
-        // Contiene números
-        if (/[0-9]/.test(password)) level++;
-        
-        // Contiene caracteres especiales
-        if (/[^A-Za-z0-9]/.test(password)) level++;
+        if (/[a-z]/.test(password)) score += 1;        // minúsculas
+        if (/[A-Z]/.test(password)) score += 1;        // mayúsculas
+        if (/\d/.test(password)) score += 1;           // números
+        if (/[^A-Za-z0-9]/.test(password)) score += 2;
 
         // Calcular nivel final (0-4)
-        let finalLevel = 0;
+        let finalScore = 0;
         let label = '';
 
-        if (level <= 1) {
-            finalLevel = 0;
-            label = 'Muy débil';
-        } else if (level === 2) {
-            finalLevel = 1;
+        if (score <= 3) {
+            finalScore = 1;
             label = 'Débil';
-        } else if (level === 3 || level === 4) {
-            finalLevel = 2;
+        } else if (score <= 5) {
+            finalScore = 2;
             label = 'Media';
-        } else if (level === 5) {
-            finalLevel = 3;
-            label = 'Fuerte';
+        } else if (score <= 7) {
+            finalScore = 3;
+            label = 'Buena';
         } else {
-            finalLevel = 4;
-            label = 'Muy fuerte';
+            finalScore = 4;
+            label = 'Fuerte';
         }
 
-        setStrength({ level: finalLevel, label });
+        setStrength({ score: finalScore, label });
     }, [password]);
 
     return strength;

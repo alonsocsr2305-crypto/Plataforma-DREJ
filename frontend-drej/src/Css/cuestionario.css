@@ -1,0 +1,491 @@
+/* ====================================================
+   ESTILOS PARA COMPONENTE CUESTIONARIO
+   Archivo: frontend-drej/src/Css/cuestionario.css
+============================================ */
+
+.cuestionario-container {
+    min-height: 100vh;
+    background: #f0f4f8;
+    padding: 20px;
+}
+
+/* ============================================
+   HEADER
+============================================ */
+.cuestionario-header {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.btn-back {
+    padding: 10px 16px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    color: #2c3e50;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-back:hover {
+    background: #e9ecef;
+    transform: translateX(-2px);
+}
+
+.header-info {
+    flex: 1;
+}
+
+.header-info h1 {
+    margin: 0 0 8px 0;
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.header-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.header-stats svg {
+    color: #4a90e2;
+}
+
+/* ============================================
+   BARRA DE PROGRESO
+============================================ */
+.progreso-bar {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.progreso-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.progreso-fill-container {
+    width: 100%;
+    height: 12px;
+    background: #e8ecef;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.progreso-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4a90e2 0%, #357abd 100%);
+    border-radius: 6px;
+    transition: width 0.6s ease;
+}
+
+/* ============================================
+   ALERTA
+============================================ */
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+}
+
+.alert-error {
+    background: #fff5f5;
+    border: 1px solid #e74c3c;
+    color: #c62828;
+}
+
+/* ============================================
+   TARJETA DE PREGUNTA
+============================================ */
+.pregunta-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.pregunta-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.pregunta-categoria {
+    padding: 6px 16px;
+    background: #eef6ff;
+    color: #4a90e2;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.pregunta-numero {
+    color: #6c757d;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.pregunta-texto {
+    margin: 0 0 32px 0;
+    color: #2c3e50;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* ============================================
+   OPCIONES
+============================================ */
+.opciones-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.opcion-button {
+    padding: 16px 20px;
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: all 0.3s ease;
+    text-align: left;
+}
+
+.opcion-button:hover {
+    background: #e9ecef;
+    border-color: #4a90e2;
+    transform: translateX(4px);
+}
+
+.opcion-button.selected {
+    background: #eef6ff;
+    border-color: #4a90e2;
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.2);
+}
+
+.opcion-radio {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #dee2e6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+}
+
+.opcion-button.selected .opcion-radio {
+    border-color: #4a90e2;
+    background: #4a90e2;
+    color: white;
+}
+
+.opcion-texto {
+    flex: 1;
+    color: #2c3e50;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* ============================================
+   FOOTER / NAVEGACIÓN
+============================================ */
+.cuestionario-footer {
+    background: white;
+    border-radius: 12px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+}
+
+.btn-nav,
+.btn-guardar,
+.btn-finalizar {
+    padding: 12px 24px;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    background: white;
+    color: #2c3e50;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-nav:hover:not(:disabled) {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+}
+
+.btn-nav:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-nav.primary {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    border-color: #4a90e2;
+}
+
+.btn-nav.primary:hover {
+    background: linear-gradient(135deg, #357abd 0%, #2868a8 100%);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.btn-guardar {
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.btn-guardar:hover:not(:disabled) {
+    background: #d4edda;
+}
+
+.btn-finalizar {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    color: white;
+    border-color: #28a745;
+}
+
+.btn-finalizar:hover:not(:disabled) {
+    background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-finalizar:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   MODAL DE CONFIRMACIÓN
+============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h3 {
+    margin: 0 0 16px 0;
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.modal-content p {
+    margin: 0 0 24px 0;
+    color: #6c757d;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-actions button {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-actions .btn-secondary {
+    background: white;
+    color: #6c757d;
+    border: 2px solid #dee2e6;
+}
+
+.modal-actions .btn-secondary:hover:not(:disabled) {
+    background: #f8f9fa;
+}
+
+.modal-actions .btn-primary {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+    border: none;
+}
+
+.modal-actions .btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #357abd 0%, #2868a8 100%);
+    box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.modal-actions button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   ESTADOS DE CARGA Y ERROR
+============================================ */
+.loading-state,
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    text-align: center;
+    padding: 40px;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4a90e2;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error-state h2 {
+    margin: 20px 0 12px 0;
+    color: #e74c3c;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.error-state p {
+    margin: 0 0 24px 0;
+    color: #6c757d;
+    font-size: 16px;
+}
+
+/* ============================================
+   RESPONSIVE
+============================================ */
+@media (max-width: 768px) {
+    .cuestionario-container {
+        padding: 12px;
+    }
+
+    .cuestionario-header {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    .header-info h1 {
+        font-size: 20px;
+    }
+
+    .pregunta-card {
+        padding: 24px 20px;
+    }
+
+    .pregunta-texto {
+        font-size: 18px;
+    }
+
+    .cuestionario-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn-nav,
+    .btn-guardar,
+    .btn-finalizar {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .modal-content {
+        padding: 24px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .pregunta-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .pregunta-texto {
+        font-size: 16px;
+    }
+
+    .opcion-button {
+        padding: 12px 16px;
+    }
+
+    .opcion-texto {
+        font-size: 14px;
+    }
+}

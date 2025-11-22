@@ -4,9 +4,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
+from django.utils import timezone
 from .serializers import RegisterSerializer, InstitucionSerializer
 from .models import InstitucionEducativa
-
+from .motor_ia_groq import procesar_recomendaciones_groq
 from .models import (
     Cuestionario, Pregunta, Opcion, Intento, Respuesta, 
     Recomendacion, Estudiante, EstadoIntento
@@ -546,8 +547,20 @@ def iniciar_cuestionario(request):
         { "intento_id": 123, "cuestionario": {...} }
     """
     try:
-        estudiante = Estudiante.objects.get(User=request.user)
+        from django.db import connection
+        from datetime import datetime
+
+        try:
+            estudiante = Estudiante.objects.get(User=request.user)
+            logger.info(f"[INICIAR_CUEST] Estudiante ID: {estudiante.EstudID}")
+        except Estudiante.DoesNotExist:
+            logger.error("[INICIAR_CUEST] Estudiante no encontrado")
+            return Response({
+                'error': 'Estudiante no encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
         cuestionario_id = request.data.get('cuestionario_id')
+        logger.info(f"[INICIAR_CUEST] Cuestionario ID: {cuestionario_id}")
         
         if not cuestionario_id:
             return Response({
@@ -555,55 +568,62 @@ def iniciar_cuestionario(request):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Verificar que el cuestionario existe y está activo
-        cuestionario = Cuestionario.objects.get(
-            CuestID=cuestionario_id,
-            CuestActivo=True
-        )
-        
-        # Verificar si ya existe un intento en progreso
-        intento_existente = Intento.objects.filter(
-            Estud=estudiante,
-            Cuest=cuestionario,
-            Confirmado=False
-        ).first()
-        
-        if intento_existente:
+        try:
+            cuestionario = Cuestionario.objects.get(
+                CuestID=cuestionario_id,
+                CuestActivo=True
+            )
+            logger.info(f"[INICIAR_CUEST] Cuestionario encontrado: {cuestionario.CuestNombre}")
+        except Cuestionario.DoesNotExist:
+            logger.error(f"[INICIAR_CUEST] Cuestionario {cuestionario_id} no encontrado")
             return Response({
-                'intento_id': intento_existente.IntentID,
-                'mensaje': 'Ya tienes un intento en progreso'
-            }, status=status.HTTP_200_OK)
+                'error': 'Cuestionario no encontrado o inactivo'
+            }, status=status.HTTP_404_NOT_FOUND)
         
-        # Crear nuevo intento
-        estado_en_progreso = EstadoIntento.objects.get(EstadoID=1)  # 1 = En Progreso
-        
-        intento = Intento.objects.create(
-            Estud=estudiante,
-            Cuest=cuestionario,
-            Estado=estado_en_progreso,
-            Confirmado=False,
-            Creado=datetime.now(),
-            UltimoAutosave=None
-        )
+        # Verificar si ya existe un intento en progreso usando SQL directo
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT IntentID 
+                FROM tblIntento 
+                WHERE EstudID = %s 
+                  AND CuestID = %s 
+                  AND Confirmado = 0
+            """, [estudiante.EstudID, cuestionario_id])
+            
+            row = cursor.fetchone()
+            
+            if row:
+                intento_id = row[0]
+                logger.info(f"[INICIAR_CUEST] Intento existente: {intento_id}")
+                return Response({
+                    'intento_id': intento_id,
+                    'cuestionario_id': cuestionario_id,
+                    'mensaje': 'Ya tienes un intento en progreso'
+                }, status=status.HTTP_200_OK)
+            
+            # Crear nuevo intento usando SQL directo
+            # EstadoID = 1 (En Progreso)
+            cursor.execute("""
+                INSERT INTO tblIntento (EstudID, CuestID, EstadoID, Confirmado, Creado, UltimoAutosave)
+                VALUES (%s, %s, 1, 0, GETDATE(), NULL);
+                SELECT SCOPE_IDENTITY();
+            """, [estudiante.EstudID, cuestionario_id])
+            
+            intento_id = cursor.fetchone()[0]
+            logger.info(f"[INICIAR_CUEST] Nuevo intento creado: {intento_id}")
         
         return Response({
-            'intento_id': intento.IntentID,
-            'cuestionario_id': cuestionario.CuestID,
+            'intento_id': int(intento_id),
+            'cuestionario_id': cuestionario_id,
             'mensaje': 'Intento creado exitosamente'
         }, status=status.HTTP_201_CREATED)
         
-    except Estudiante.DoesNotExist:
-        return Response({
-            'error': 'Estudiante no encontrado'
-        }, status=status.HTTP_404_NOT_FOUND)
-    except Cuestionario.DoesNotExist:
-        return Response({
-            'error': 'Cuestionario no encontrado'
-        }, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
-        logger.error(f"Error al iniciar cuestionario: {str(e)}", exc_info=True)
+        logger.error(f"[INICIAR_CUEST] Error: {str(e)}", exc_info=True)
         return Response({
-            'error': 'Error al iniciar cuestionario'
+            'error': f'Error al iniciar cuestionario: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 @api_view(['POST'])
@@ -611,6 +631,7 @@ def iniciar_cuestionario(request):
 def guardar_respuestas(request):
     """
     Guardar respuestas del cuestionario (autosave o confirmación final)
+    CON INTEGRACIÓN DEL MOTOR DE IA
     
     POST /api/estudiante/cuestionarios/guardar/
     Body: {
@@ -620,84 +641,150 @@ def guardar_respuestas(request):
             {"pregunta_id": 2, "opcion_id": 7},
             ...
         ],
-        "confirmar": false  // true para finalizar
+        "confirmar": false  // true para finalizar y generar recomendaciones
     }
     """
     try:
-        from django.db import transaction
+        from django.db import transaction, connection
+        from datetime import datetime
         
-        estudiante = Estudiante.objects.get(User=request.user)
+        # Obtener datos del request
         intento_id = request.data.get('intento_id')
         respuestas_data = request.data.get('respuestas', [])
         confirmar = request.data.get('confirmar', False)
         
+        # Log para debugging
+        logger.info(f"[GUARDAR_RESPUESTAS] Intento ID: {intento_id}")
+        logger.info(f"[GUARDAR_RESPUESTAS] Cantidad respuestas: {len(respuestas_data)}")
+        logger.info(f"[GUARDAR_RESPUESTAS] Confirmar: {confirmar}")
+        
+        # Validaciones
         if not intento_id:
+            logger.error("[GUARDAR_RESPUESTAS] intento_id no proporcionado")
             return Response({
                 'error': 'intento_id es requerido'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Verificar que el intento existe y pertenece al estudiante
-        intento = Intento.objects.get(IntentID=intento_id, Estud=estudiante)
+        if not respuestas_data:
+            logger.error("[GUARDAR_RESPUESTAS] respuestas vacías")
+            return Response({
+                'error': 'Debe proporcionar al menos una respuesta'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
+        # Obtener estudiante
+        try:
+            estudiante = Estudiante.objects.get(User=request.user)
+            logger.info(f"[GUARDAR_RESPUESTAS] Estudiante ID: {estudiante.EstudID}")
+        except Estudiante.DoesNotExist:
+            logger.error("[GUARDAR_RESPUESTAS] Estudiante no encontrado")
+            return Response({
+                'error': 'Estudiante no encontrado'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Verificar que el intento existe y pertenece al estudiante
+        try:
+            intento = Intento.objects.get(IntentID=intento_id, Estud=estudiante)
+            logger.info(f"[GUARDAR_RESPUESTAS] Intento encontrado: {intento.IntentID}")
+        except Intento.DoesNotExist:
+            logger.error(f"[GUARDAR_RESPUESTAS] Intento {intento_id} no encontrado")
+            return Response({
+                'error': 'Intento no encontrado o no pertenece al estudiante'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Usar SQL directo para guardar respuestas
         with transaction.atomic():
-            # Eliminar respuestas anteriores
-            Respuesta.objects.filter(Intent=intento).delete()
-            
-            # Crear nuevas respuestas
-            for resp_data in respuestas_data:
-                pregunta_id = resp_data.get('pregunta_id')
-                opcion_id = resp_data.get('opcion_id')
+            with connection.cursor() as cursor:
+                # Eliminar respuestas anteriores
+                cursor.execute("DELETE FROM tblRespuesta WHERE IntentID = %s", [intento_id])
+                logger.info(f"[GUARDAR_RESPUESTAS] Respuestas anteriores eliminadas")
                 
-                if pregunta_id and opcion_id:
-                    # Verificar que la opción pertenece a la pregunta
-                    opcion = Opcion.objects.get(
-                        OpcionID=opcion_id,
-                        Preg__PregID=pregunta_id
-                    )
+                # Insertar nuevas respuestas
+                respuestas_insertadas = 0
+                for resp_data in respuestas_data:
+                    pregunta_id = resp_data.get('pregunta_id')
+                    opcion_id = resp_data.get('opcion_id')
                     
-                    Respuesta.objects.create(
-                        Intent=intento,
-                        RespValor=str(opcion_id),
-                        RespFechaHora=datetime.now()
-                    )
-            
-            # Actualizar autosave
-            intento.UltimoAutosave = datetime.now()
-            
-            # Si se confirma, cambiar estado y procesar resultados
-            if confirmar:
-                estado_completado = EstadoIntento.objects.get(EstadoID=2)  # 2 = Completado
-                intento.Estado = estado_completado
-                intento.Confirmado = True
+                    if not pregunta_id or not opcion_id:
+                        logger.warning(f"[GUARDAR_RESPUESTAS] Respuesta inválida: {resp_data}")
+                        continue
+                    
+                    # Verificar que la opción existe
+                    cursor.execute("""
+                        SELECT COUNT(*) FROM tblOpcion 
+                        WHERE OpcionID = %s AND PregID = %s
+                    """, [opcion_id, pregunta_id])
+                    
+                    if cursor.fetchone()[0] == 0:
+                        logger.warning(f"[GUARDAR_RESPUESTAS] Opción {opcion_id} no válida")
+                        return Response({
+                            'error': f'Opción {opcion_id} no válida para pregunta {pregunta_id}'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    
+                    # Insertar respuesta
+                    cursor.execute("""
+                        INSERT INTO tblRespuesta (IntentID, RespValor, RespFechaHora)
+                        VALUES (%s, %s, GETDATE())
+                    """, [intento_id, str(opcion_id)])
+                    
+                    respuestas_insertadas += 1
                 
-                # TODO: Aquí se puede agregar lógica para calcular recomendaciones
-                # procesar_recomendaciones(intento)
-            
-            intento.save()
+                logger.info(f"[GUARDAR_RESPUESTAS] {respuestas_insertadas} respuestas insertadas")
+                
+                # Actualizar el intento
+                if confirmar:
+                    # Cambiar estado a completado
+                    cursor.execute("""
+                        UPDATE tblIntento 
+                        SET Confirmado = 1, 
+                            EstadoID = 2,
+                            UltimoAutosave = GETDATE()
+                        WHERE IntentID = %s
+                    """, [intento_id])
+                    logger.info(f"[GUARDAR_RESPUESTAS] Intento {intento_id} confirmado")
+                    
+                    # 🤖 PROCESAR RECOMENDACIONES CON IA
+                    logger.info(f"[GUARDAR_RESPUESTAS] 🤖 Iniciando motor de IA...")
+                    resultado_ia = procesar_recomendaciones_groq(intento_id, usar_ia=True)
+                    
+                    if resultado_ia['success']:
+                        logger.info(f"[GUARDAR_RESPUESTAS] ✅ Recomendaciones generadas: {len(resultado_ia['recomendaciones'])}")
+                        
+                        return Response({
+                            'mensaje': 'Cuestionario completado exitosamente',
+                            'confirmado': True,
+                            'respuestas_guardadas': respuestas_insertadas,
+                            'recomendaciones_generadas': len(resultado_ia['recomendaciones']),
+                            'scores_por_categoria': resultado_ia['scores_por_categoria']
+                        }, status=status.HTTP_200_OK)
+                    else:
+                        logger.error(f"[GUARDAR_RESPUESTAS] Error en motor IA: {resultado_ia.get('error')}")
+                        # Aún así devolver éxito, las recomendaciones se pueden generar después
+                        return Response({
+                            'mensaje': 'Cuestionario completado pero hubo un problema al generar recomendaciones',
+                            'confirmado': True,
+                            'respuestas_guardadas': respuestas_insertadas,
+                            'error_ia': resultado_ia.get('error')
+                        }, status=status.HTTP_200_OK)
+                else:
+                    # Solo actualizar autosave
+                    cursor.execute("""
+                        UPDATE tblIntento 
+                        SET UltimoAutosave = GETDATE()
+                        WHERE IntentID = %s
+                    """, [intento_id])
+                    logger.info(f"[GUARDAR_RESPUESTAS] Autosave actualizado")
         
         return Response({
             'mensaje': 'Respuestas guardadas exitosamente',
-            'confirmado': confirmar
+            'confirmado': confirmar,
+            'respuestas_guardadas': respuestas_insertadas
         }, status=status.HTTP_200_OK)
         
-    except Estudiante.DoesNotExist:
-        return Response({
-            'error': 'Estudiante no encontrado'
-        }, status=status.HTTP_404_NOT_FOUND)
-    except Intento.DoesNotExist:
-        return Response({
-            'error': 'Intento no encontrado'
-        }, status=status.HTTP_404_NOT_FOUND)
-    except Opcion.DoesNotExist:
-        return Response({
-            'error': 'Opción inválida'
-        }, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        logger.error(f"Error al guardar respuestas: {str(e)}", exc_info=True)
+        logger.error(f"[GUARDAR_RESPUESTAS] Error inesperado: {str(e)}", exc_info=True)
         return Response({
-            'error': 'Error al guardar respuestas'
+            'error': f'Error al guardar respuestas: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

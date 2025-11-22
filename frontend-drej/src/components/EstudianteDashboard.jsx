@@ -14,6 +14,8 @@ import {
     AlertCircle
 } from 'lucide-react';
 import { authAPI } from '../services/Api';
+import { cuestionariosAPI } from '../services/cuestionarios';
+
 import '../Css/estudiante-dashboard.css';
 
 const EstudianteDashboard = () => {
@@ -25,16 +27,20 @@ const EstudianteDashboard = () => {
 
     // Datos de ejemplo - en producción vendrían del backend
     const [dashboardData, setDashboardData] = useState({
-        cuestionariosDisponibles: 3,
-        cuestionariosCompletados: 1,
-        ultimaEvaluacion: 'Test de Intereses Vocacionales',
-        fechaUltimaEvaluacion: '2024-11-15',
-        recomendacionesActivas: 5,
-        progreso: 33
+        cuestionariosDisponibles: 0,
+        cuestionariosCompletados: 0,
+        ultimaEvaluacion: null,
+        fechaUltimaEvaluacion: null,
+        recomendacionesActivas: 0,
+        progreso: 0
     });
+
+    const [cuestionarios, setCuestionarios] = useState([]);
+    const [loadingDashboard, setLoadingDashboard] = useState(true);
 
     useEffect(() => {
         loadUserData();
+        loadDashboardData();  // Nueva función
     }, []);
 
     const loadUserData = async () => {
@@ -61,6 +67,50 @@ const EstudianteDashboard = () => {
         }
     };
 
+    const loadDashboardData = async () => {
+        try {
+            setLoadingDashboard(true);
+            console.log('📊 [DASHBOARD] Cargando datos...');
+            
+            const data = await cuestionariosAPI.obtenerDashboard();
+            console.log('✅ [DASHBOARD] Datos recibidos:', data);
+            
+            setDashboardData({
+                cuestionariosDisponibles: data.cuestionariosDisponibles || 0,
+                cuestionariosCompletados: data.cuestionariosCompletados || 0,
+                ultimaEvaluacion: data.ultimaEvaluacion || null,
+                fechaUltimaEvaluacion: data.fechaUltimaEvaluacion || null,
+                recomendacionesActivas: data.recomendacionesActivas || 0,
+                progreso: data.progreso || 0
+            });
+            
+        } catch (err) {
+            console.error('❌ [DASHBOARD] Error al cargar datos del dashboard:', err);
+            // Mantener valores por defecto en caso de error
+            setDashboardData({
+                cuestionariosDisponibles: 0,
+                cuestionariosCompletados: 0,
+                ultimaEvaluacion: null,
+                fechaUltimaEvaluacion: null,
+                recomendacionesActivas: 0,
+                progreso: 0
+            });
+        } finally {
+            setLoadingDashboard(false);
+        }
+    };
+
+    const loadCuestionarios = async () => {
+        try {
+            console.log('📝 [DASHBOARD] Cargando cuestionarios...');
+            const data = await cuestionariosAPI.listarCuestionarios();
+            console.log('✅ [DASHBOARD] Cuestionarios recibidos:', data);
+            setCuestionarios(data);
+        } catch (err) {
+            console.error('❌ [DASHBOARD] Error al cargar cuestionarios:', err);
+        }
+    };
+    
     const handleLogout = () => {
         authAPI.logout();
         navigate('/');
@@ -291,35 +341,67 @@ const InicioModule = ({ data }) => {
 // MÓDULO: CUESTIONARIOS
 // ============================================
 const CuestionariosModule = () => {
-    const cuestionarios = [
-        {
-            id: 1,
-            titulo: 'Test de Intereses Vocacionales',
-            descripcion: 'Identifica tus áreas de interés profesional',
-            duracion: '15-20 min',
-            preguntas: 48,
-            estado: 'completado',
-            completado: true
-        },
-        {
-            id: 2,
-            titulo: 'Evaluación de Habilidades',
-            descripcion: 'Descubre tus principales fortalezas y aptitudes',
-            duracion: '20-25 min',
-            preguntas: 60,
-            estado: 'disponible',
-            completado: false
-        },
-        {
-            id: 3,
-            titulo: 'Test de Personalidad Vocacional',
-            descripcion: 'Conoce tu perfil de personalidad y carreras afines',
-            duracion: '10-15 min',
-            preguntas: 36,
-            estado: 'disponible',
-            completado: false
+    const navigate = useNavigate(); // Agrega esto al inicio del componente
+    const [cuestionarios, setCuestionarios] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        cargarCuestionarios();
+    }, []);
+
+    const cargarCuestionarios = async () => {
+        try {
+            setLoading(true);
+            console.log('📝 [CUESTIONARIOS] Cargando cuestionarios...');
+            
+            const data = await cuestionariosAPI.listarCuestionarios();
+            console.log('✅ [CUESTIONARIOS] Recibidos:', data);
+            
+            setCuestionarios(data);
+        } catch (err) {
+            console.error('❌ [CUESTIONARIOS] Error:', err);
+            setError('Error al cargar los cuestionarios');
+        } finally {
+            setLoading(false);
         }
-    ];
+    };
+
+    const handleIniciarCuestionario = (cuestionarioId) => {
+        console.log('🚀 [CUESTIONARIOS] Iniciando cuestionario:', cuestionarioId);
+        navigate(`/estudiante/cuestionario/${cuestionarioId}`);
+    };
+
+    const handleVerResultados = (intentoId) => {
+        console.log('📊 [CUESTIONARIOS] Ver resultados del intento:', intentoId);
+        // Cambiar al módulo de resultados
+        // O navegar a una página de detalle de resultados
+    };
+
+    if (loading) {
+        return (
+            <div className="module-cuestionarios">
+                <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                    <p>Cargando cuestionarios...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="module-cuestionarios">
+                <div className="error-container">
+                    <AlertCircle size={48} color="#e74c3c" />
+                    <h3>{error}</h3>
+                    <button onClick={cargarCuestionarios} className="btn-primary">
+                        Reintentar
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="module-cuestionarios">
@@ -328,44 +410,61 @@ const CuestionariosModule = () => {
                 <p>Completa las evaluaciones para recibir recomendaciones personalizadas</p>
             </div>
 
-            <div className="cuestionarios-grid">
-                {cuestionarios.map(cuestionario => (
-                    <div key={cuestionario.id} className={`cuestionario-card ${cuestionario.completado ? 'completed' : ''}`}>
-                        <div className="cuestionario-header">
-                            {cuestionario.completado ? (
-                                <div className="status-badge completed">
-                                    <CheckCircle size={16} />
-                                    Completado
-                                </div>
-                            ) : (
-                                <div className="status-badge available">
-                                    <AlertCircle size={16} />
-                                    Disponible
-                                </div>
-                            )}
-                        </div>
-                        
-                        <h3>{cuestionario.titulo}</h3>
-                        <p className="cuestionario-descripcion">{cuestionario.descripcion}</p>
-                        
-                        <div className="cuestionario-meta">
-                            <div className="meta-item">
-                                <Clock size={16} />
-                                <span>{cuestionario.duracion}</span>
+            {cuestionarios.length === 0 ? (
+                <div className="empty-state">
+                    <BookOpen size={64} color="#cbd5e0" />
+                    <h3>No hay cuestionarios disponibles</h3>
+                    <p>Pronto habrá nuevos cuestionarios disponibles</p>
+                </div>
+            ) : (
+                <div className="cuestionarios-grid">
+                    {cuestionarios.map(cuestionario => (
+                        <div key={cuestionario.id} className={`cuestionario-card ${cuestionario.completado ? 'completed' : ''}`}>
+                            <div className="cuestionario-header">
+                                {cuestionario.completado ? (
+                                    <div className="status-badge completed">
+                                        <CheckCircle size={16} />
+                                        Completado
+                                    </div>
+                                ) : (
+                                    <div className="status-badge available">
+                                        <AlertCircle size={16} />
+                                        Disponible
+                                    </div>
+                                )}
                             </div>
-                            <div className="meta-item">
-                                <BookOpen size={16} />
-                                <span>{cuestionario.preguntas} preguntas</span>
+                            
+                            <h3>{cuestionario.titulo}</h3>
+                            <p className="cuestionario-descripcion">{cuestionario.descripcion}</p>
+                            
+                            <div className="cuestionario-meta">
+                                <div className="meta-item">
+                                    <Clock size={16} />
+                                    <span>{cuestionario.duracion}</span>
+                                </div>
+                                <div className="meta-item">
+                                    <BookOpen size={16} />
+                                    <span>{cuestionario.preguntas} preguntas</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <button className={`cuestionario-button ${cuestionario.completado ? 'secondary' : 'primary'}`}>
-                            {cuestionario.completado ? 'Ver Resultados' : 'Comenzar Test'}
-                            <ChevronRight size={18} />
-                        </button>
-                    </div>
-                ))}
-            </div>
+                            <button 
+                                className={`cuestionario-button ${cuestionario.completado ? 'secondary' : 'primary'}`}
+                                onClick={() => {
+                                    if (cuestionario.completado && cuestionario.intento_id) {
+                                        handleVerResultados(cuestionario.intento_id);
+                                    } else {
+                                        handleIniciarCuestionario(cuestionario.id);
+                                    }
+                                }}
+                            >
+                                {cuestionario.completado ? 'Ver Resultados' : 'Comenzar Test'}
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             <div className="info-box">
                 <AlertCircle size={20} />

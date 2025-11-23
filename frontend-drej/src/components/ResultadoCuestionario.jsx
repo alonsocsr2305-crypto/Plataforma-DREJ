@@ -1,5 +1,5 @@
 // ====================================================
-// COMPONENTE: RESULTADOS DEL CUESTIONARIO
+// COMPONENTE MEJORADO: RESULTADOS CON RECOMENDACIONES IA
 // Archivo: frontend-drej/src/components/ResultadoCuestionario.jsx
 // ====================================================
 
@@ -12,7 +12,10 @@ import {
     CheckCircle,
     Download,
     Share2,
-    Star
+    Star,
+    Sparkles,
+    Target,
+    Zap
 } from 'lucide-react';
 import { cuestionariosAPI } from '../services/cuestionarios';
 import '../Css/resultado-cuestionario.css';
@@ -54,41 +57,34 @@ const ResultadoCuestionario = () => {
         }
     };
 
-    const obtenerColorNivel = (nivel) => {
-        switch(nivel?.toLowerCase()) {
-            case 'muy alto':
-                return '#10b981'; // Verde
-            case 'alto':
-                return '#3b82f6'; // Azul
-            case 'medio-alto':
-                return '#8b5cf6'; // Púrpura
-            case 'medio':
-                return '#f59e0b'; // Amarillo
-            default:
-                return '#6b7280'; // Gris
-        }
+    // Función auxiliar para obtener el color según el nivel
+    const getNivelColor = (nivel) => {
+        const colores = {
+            'Excelente': '#10b981',
+            'Muy Bueno': '#3b82f6',
+            'Bueno': '#6366f1',
+            'Regular': '#f59e0b'
+        };
+        return colores[nivel] || '#6b7280';
     };
 
-    const obtenerIconoNivel = (nivel) => {
-        switch(nivel?.toLowerCase()) {
-            case 'muy alto':
-            case 'alto':
-                return '🌟';
-            case 'medio-alto':
-                return '⭐';
-            case 'medio':
-                return '✨';
-            default:
-                return '💫';
-        }
+    // Función auxiliar para obtener el icono según el nivel
+    const getNivelIcon = (nivel) => {
+        const iconos = {
+            'Excelente': <Zap size={20} />,
+            'Muy Bueno': <Star size={20} />,
+            'Bueno': <Target size={20} />,
+            'Regular': <Award size={20} />
+        };
+        return iconos[nivel] || <Award size={20} />;
     };
 
     if (loading) {
         return (
             <div className="resultado-container">
-                <div className="loading-state">
+                <div className="loading-container">
                     <div className="loading-spinner"></div>
-                    <p>Cargando tus resultados...</p>
+                    <p>Cargando tu resultado...</p>
                 </div>
             </div>
         );
@@ -97,13 +93,9 @@ const ResultadoCuestionario = () => {
     if (error || !resultado) {
         return (
             <div className="resultado-container">
-                <div className="error-state">
-                    <h2>⚠️ Error</h2>
-                    <p>{error}</p>
-                    <button 
-                        onClick={() => navigate('/estudiante/dashboard')}
-                        className="btn-primary"
-                    >
+                <div className="error-container">
+                    <h3>{error || 'No se encontró el resultado'}</h3>
+                    <button onClick={() => navigate('/estudiante')} className="btn-primary">
                         Volver al Dashboard
                     </button>
                 </div>
@@ -115,33 +107,24 @@ const ResultadoCuestionario = () => {
         <div className="resultado-container">
             {/* Header */}
             <div className="resultado-header">
-                <button 
-                    onClick={() => navigate('/estudiante/dashboard')}
-                    className="btn-back"
-                >
+                <button onClick={() => navigate('/estudiante')} className="btn-back">
                     <ArrowLeft size={20} />
-                    Volver al Dashboard
+                    Volver
                 </button>
-                
-                <div className="header-actions">
-                    <button className="btn-action">
-                        <Share2 size={18} />
-                        Compartir
+                <div className="resultado-actions">
+                    <button className="btn-icon">
+                        <Download size={20} />
                     </button>
-                    <button className="btn-action">
-                        <Download size={18} />
-                        Descargar PDF
+                    <button className="btn-icon">
+                        <Share2 size={20} />
                     </button>
                 </div>
             </div>
 
-            {/* Banner de Éxito */}
-            <div className="success-banner">
-                <div className="success-icon">
-                    <CheckCircle size={48} />
-                </div>
-                <div className="success-content">
-                    <h1>¡Cuestionario Completado! 🎉</h1>
+            {/* Hero Section */}
+            <div className="resultado-hero">
+                <div className="hero-content">
+                    <h1>¡Resultados Completados! 🎉</h1>
                     <p>Has completado exitosamente: <strong>{resultado.cuestionario}</strong></p>
                     <p className="fecha">Fecha: {new Date(resultado.fecha).toLocaleDateString('es-ES', {
                         year: 'numeric',
@@ -169,113 +152,116 @@ const ResultadoCuestionario = () => {
                         <p>Preguntas Respondidas</p>
                     </div>
                 </div>
+                <div className="stat-box">
+                    <Sparkles size={32} />
+                    <div>
+                        <h3>IA</h3>
+                        <p>Análisis con IA</p>
+                    </div>
+                </div>
             </div>
 
-            {/* Recomendaciones */}
+            {/* Recomendaciones Mejoradas */}
             <div className="recomendaciones-section">
                 <div className="section-header">
                     <h2>
                         <TrendingUp size={24} />
                         Tus Carreras Recomendadas
                     </h2>
-                    <p>Basadas en tus respuestas y perfil vocacional</p>
+                    <p>Generadas con Inteligencia Artificial basadas en tu perfil vocacional</p>
                 </div>
 
                 {resultado.recomendaciones && resultado.recomendaciones.length > 0 ? (
-                    <div className="recomendaciones-list">
+                    <div className="recomendaciones-lista">
                         {resultado.recomendaciones.map((rec, index) => (
-                            <div key={rec.id} className="recomendacion-card">
-                                <div className="card-header">
-                                    <div className="ranking-badge">#{index + 1}</div>
-                                    <div className="nivel-badge" style={{ 
-                                        backgroundColor: obtenerColorNivel(rec.nivel),
-                                        color: 'white'
-                                    }}>
-                                        {obtenerIconoNivel(rec.nivel)} {rec.nivel}
+                            <div 
+                                key={rec.id} 
+                                className="recomendacion-card-mejorada"
+                                style={{
+                                    borderLeft: `4px solid ${getNivelColor(rec.nivel)}`,
+                                    animationDelay: `${index * 0.1}s`
+                                }}
+                            >
+                                {/* Header de la Tarjeta */}
+                                <div className="recomendacion-header">
+                                    <div className="recomendacion-ranking">
+                                        <span className="ranking-numero">#{index + 1}</span>
+                                    </div>
+                                    <div className="recomendacion-titulo">
+                                        <h3>{rec.carrera}</h3>
+                                        <div className="recomendacion-meta">
+                                            <span 
+                                                className="nivel-badge"
+                                                style={{ backgroundColor: getNivelColor(rec.nivel) }}
+                                            >
+                                                {getNivelIcon(rec.nivel)}
+                                                {rec.nivel}
+                                            </span>
+                                            <span className="score-badge">
+                                                <Star size={16} fill="currentColor" />
+                                                {rec.score}% Afinidad
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <h3 className="carrera-nombre">{rec.carrera}</h3>
-                                <p className="carrera-descripcion">{rec.descripcion}</p>
-
-                                {/* Barra de Score */}
-                                <div className="score-section">
-                                    <div className="score-header">
-                                        <span>Afinidad</span>
-                                        <span className="score-value">{rec.score?.toFixed(1)}%</span>
-                                    </div>
-                                    <div className="score-bar">
-                                        <div 
-                                            className="score-fill"
-                                            style={{ 
-                                                width: `${rec.score}%`,
-                                                backgroundColor: obtenerColorNivel(rec.nivel)
-                                            }}
-                                        ></div>
+                                {/* Barra de Progreso */}
+                                <div className="score-bar-container">
+                                    <div 
+                                        className="score-bar"
+                                        style={{ 
+                                            width: `${rec.score}%`,
+                                            backgroundColor: getNivelColor(rec.nivel)
+                                        }}
+                                    >
+                                        <span className="score-text">{rec.score}%</span>
                                     </div>
                                 </div>
 
-                                {/* Estrellas */}
-                                <div className="rating-stars">
-                                    {[1, 2, 3, 4, 5].map(star => (
-                                        <Star
-                                            key={star}
-                                            size={20}
-                                            fill={star <= (rec.score / 20) ? obtenerColorNivel(rec.nivel) : 'none'}
-                                            color={star <= (rec.score / 20) ? obtenerColorNivel(rec.nivel) : '#cbd5e0'}
-                                        />
-                                    ))}
+                                {/* Descripción con IA */}
+                                <div className="recomendacion-descripcion">
+                                    <div className="ia-indicator">
+                                        <Sparkles size={16} />
+                                        <span>Análisis personalizado con IA</span>
+                                    </div>
+                                    <p>{rec.descripcion}</p>
                                 </div>
 
-                                <button className="btn-info-carrera">
-                                    Más información sobre esta carrera →
-                                </button>
+                                {/* Acciones */}
+                                <div className="recomendacion-acciones">
+                                    <button className="btn-detalle">
+                                        Ver Detalles
+                                    </button>
+                                    <button className="btn-comparar">
+                                        Comparar
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
                 ) : (
                     <div className="empty-recomendaciones">
-                        <p>No se generaron recomendaciones. Por favor, contacta al orientador.</p>
+                        <TrendingUp size={64} color="#cbd5e0" />
+                        <h3>No se generaron recomendaciones</h3>
+                        <p>Intenta completar el cuestionario nuevamente</p>
                     </div>
                 )}
             </div>
 
-            {/* Próximos Pasos */}
-            <div className="next-steps">
-                <h3>📋 Próximos Pasos</h3>
-                <ul>
-                    <li>
-                        <CheckCircle size={20} />
-                        <span>Investiga más sobre las carreras recomendadas</span>
-                    </li>
-                    <li>
-                        <CheckCircle size={20} />
-                        <span>Consulta con un orientador vocacional</span>
-                    </li>
-                    <li>
-                        <CheckCircle size={20} />
-                        <span>Explora las universidades que ofrecen estas carreras</span>
-                    </li>
-                    <li>
-                        <CheckCircle size={20} />
-                        <span>Completa otros cuestionarios para una orientación más precisa</span>
-                    </li>
-                </ul>
-            </div>
-
-            {/* CTA */}
+            {/* Botones de Acción */}
             <div className="resultado-footer">
                 <button 
-                    onClick={() => navigate('/estudiante/dashboard')}
-                    className="btn-primary-large"
+                    className="btn-secondary"
+                    onClick={() => navigate('/estudiante')}
                 >
-                    Completar Más Cuestionarios
+                    Volver al Dashboard
                 </button>
                 <button 
-                    onClick={() => navigate('/estudiante/dashboard')}
-                    className="btn-secondary-large"
+                    className="btn-primary"
+                    onClick={() => {/* Implementar compartir */}}
                 >
-                    Ver Todos Mis Resultados
+                    <Share2 size={20} />
+                    Compartir Resultados
                 </button>
             </div>
         </div>

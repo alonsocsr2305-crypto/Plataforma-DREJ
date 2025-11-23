@@ -23,6 +23,17 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+def limpiar_texto_unicode(texto: str) -> str:
+    """Limpia caracteres Unicode problemáticos"""
+    if not texto:
+        return texto
+    import re
+    texto = texto.replace('\xa0', ' ').replace('\u00a0', ' ')
+    reemplazos = {'\u2013': '-', '\u2014': '--', '\u2018': "'", '\u2019': "'", '\u201c': '"', '\u201d': '"', '\u2026': '...'}
+    for u, r in reemplazos.items():
+        texto = texto.replace(u, r)
+    return re.sub(r'\s+', ' ', texto).strip()
+
 # ====================================================
 # CATÁLOGO DE CARRERAS (Mismo que antes)
 # ====================================================
@@ -222,7 +233,7 @@ Responde SOLO con la descripción, sin introducción."""
 
             # Llamar a Groq
             response = self.groq_client.chat.completions.create(
-                model="mixtral-8x7b-32768",  # Modelo rápido y bueno
+                model="openai/gpt-oss-120b",  # Modelo rápido y bueno
                 messages=[
                     {
                         "role": "system",
@@ -239,6 +250,7 @@ Responde SOLO con la descripción, sin introducción."""
             )
             
             descripcion = response.choices[0].message.content.strip()
+            descripcion = limpiar_texto_unicode(descripcion)
             logger.info(f"[MOTOR_IA_GROQ] ✨ Descripción generada para {carrera}")
             return descripcion
             

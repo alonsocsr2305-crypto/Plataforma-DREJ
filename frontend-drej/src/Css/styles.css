@@ -79,6 +79,9 @@ input.error {
     color: white;
     font-size: 16px;
     font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
     transition: all 0.3s ease;
     font-family: 'Ligconsolata', monospace;
@@ -117,7 +120,10 @@ input.error {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-family: inherit;
+    font-family: 'Ligconsolata', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-secondary:hover {

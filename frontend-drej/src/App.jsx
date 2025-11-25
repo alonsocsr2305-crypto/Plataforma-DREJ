@@ -10,8 +10,7 @@ import Cuestionario from './components/Cuestionario.jsx';
 import ResultadoCuestionario from './components/ResultadoCuestionario.jsx';
 
 import './Css/variables.css';
-import './Css/commons.css';
-
+import './Css/styles.css';
 function App() {
   return (
     <BrowserRouter>

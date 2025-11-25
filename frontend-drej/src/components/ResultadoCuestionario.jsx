@@ -95,7 +95,7 @@ const ResultadoCuestionario = () => {
             <div className="resultado-container">
                 <div className="error-container">
                     <h3>{error || 'No se encontró el resultado'}</h3>
-                    <button onClick={() => navigate('/estudiante')} className="btn-primary">
+                    <button onClick={() => navigate('/estudiante/dashboard')} className="btn-primary">
                         Volver al Dashboard
                     </button>
                 </div>
@@ -107,7 +107,7 @@ const ResultadoCuestionario = () => {
         <div className="resultado-container">
             {/* Header */}
             <div className="resultado-header">
-                <button onClick={() => navigate('/estudiante')} className="btn-back">
+                <button onClick={() => navigate('/estudiante/dashboard')} className="btn-back">
                     <ArrowLeft size={20} />
                     Volver
                 </button>
@@ -252,7 +252,7 @@ const ResultadoCuestionario = () => {
             <div className="resultado-footer">
                 <button 
                     className="btn-secondary"
-                    onClick={() => navigate('/estudiante')}
+                    onClick={() => navigate('/estudiante/dashboard')}
                 >
                     Volver al Dashboard
                 </button>

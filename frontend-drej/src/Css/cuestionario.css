@@ -313,28 +313,6 @@
     padding: 20px;
 }
 
-.modal-content {
-    background: white;
-    border-radius: 12px;
-    padding: 32px;
-    max-width: 500px;
-    width: 100%;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-}
-
-.modal-content h3 {
-    margin: 0 0 16px 0;
-    color: #2c3e50;
-    font-size: 24px;
-    font-weight: 600;
-}
-
-.modal-content p {
-    margin: 0 0 24px 0;
-    color: #6c757d;
-    font-size: 16px;
-    line-height: 1.6;
-}
 
 .modal-actions {
     display: flex;

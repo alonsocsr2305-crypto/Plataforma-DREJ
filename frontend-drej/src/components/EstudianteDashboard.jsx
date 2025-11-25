@@ -24,6 +24,10 @@ const EstudianteDashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [activeModule, setActiveModule] = useState('inicio');
+    const handleVerResultados = (intentoId) => {
+        console.log('📊 [CUESTIONARIOS] Ver resultados del intento:', intentoId);
+        navigate(`/estudiante/resultado/${intentoId}`);
+    };
 
     // Datos de ejemplo - en producción vendrían del backend
     const [dashboardData, setDashboardData] = useState({
@@ -374,8 +378,7 @@ const CuestionariosModule = () => {
 
     const handleVerResultados = (intentoId) => {
         console.log('📊 [CUESTIONARIOS] Ver resultados del intento:', intentoId);
-        // Cambiar al módulo de resultados
-        // O navegar a una página de detalle de resultados
+        navigate(`/estudiante/resultado/${intentoId}`);
     };
 
     if (loading) {

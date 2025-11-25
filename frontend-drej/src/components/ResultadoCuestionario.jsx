@@ -1,5 +1,5 @@
 // ====================================================
-// COMPONENTE MEJORADO: RESULTADOS CON RECOMENDACIONES IA
+// COMPONENTE MEJORADO: RESULTADOS CON MANEJO DE ESTADO VACÍO
 // Archivo: frontend-drej/src/components/ResultadoCuestionario.jsx
 // ====================================================
 
@@ -15,7 +15,10 @@ import {
     Star,
     Sparkles,
     Target,
-    Zap
+    Zap,
+    AlertCircle,
+    RefreshCw,
+    HelpCircle
 } from 'lucide-react';
 import { cuestionariosAPI } from '../services/cuestionarios';
 import '../Css/resultado-cuestionario.css';
@@ -28,6 +31,7 @@ const ResultadoCuestionario = () => {
     const [loading, setLoading] = useState(true);
     const [resultado, setResultado] = useState(null);
     const [error, setError] = useState('');
+    const [regenerando, setRegenerando] = useState(false);
 
     useEffect(() => {
         if (intentoId) {
@@ -57,34 +61,27 @@ const ResultadoCuestionario = () => {
         }
     };
 
-    // Función auxiliar para obtener el color según el nivel
-    const getNivelColor = (nivel) => {
-        const colores = {
-            'Excelente': '#10b981',
-            'Muy Bueno': '#3b82f6',
-            'Bueno': '#6366f1',
-            'Regular': '#f59e0b'
-        };
-        return colores[nivel] || '#6b7280';
-    };
-
-    // Función auxiliar para obtener el icono según el nivel
-    const getNivelIcon = (nivel) => {
-        const iconos = {
-            'Excelente': <Zap size={20} />,
-            'Muy Bueno': <Star size={20} />,
-            'Bueno': <Target size={20} />,
-            'Regular': <Award size={20} />
-        };
-        return iconos[nivel] || <Award size={20} />;
+    const handleRegenerar = async () => {
+        // Función para regenerar recomendaciones
+        // Necesitarías crear un endpoint en el backend
+        setRegenerando(true);
+        try {
+            // await cuestionariosAPI.regenerarRecomendaciones(intentoId);
+            // await cargarResultado(intentoId);
+            alert('Funcionalidad de regeneración en desarrollo');
+        } catch (err) {
+            console.error('Error al regenerar:', err);
+        } finally {
+            setRegenerando(false);
+        }
     };
 
     if (loading) {
         return (
             <div className="resultado-container">
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                    <p>Cargando tu resultado...</p>
+                <div className="loading-state">
+                    <div className="spinner"></div>
+                    <p>Cargando resultados...</p>
                 </div>
             </div>
         );
@@ -93,9 +90,14 @@ const ResultadoCuestionario = () => {
     if (error || !resultado) {
         return (
             <div className="resultado-container">
-                <div className="error-container">
-                    <h3>{error || 'No se encontró el resultado'}</h3>
-                    <button onClick={() => navigate('/estudiante/dashboard')} className="btn-primary">
+                <div className="error-state">
+                    <AlertCircle size={64} color="#ef4444" />
+                    <h2>Error al cargar</h2>
+                    <p>{error || 'No se encontró el resultado'}</p>
+                    <button 
+                        className="btn-primary"
+                        onClick={() => navigate('/estudiante/dashboard')}
+                    >
                         Volver al Dashboard
                     </button>
                 </div>
@@ -105,26 +107,21 @@ const ResultadoCuestionario = () => {
 
     return (
         <div className="resultado-container">
-            {/* Header */}
-            <div className="resultado-header">
-                <button onClick={() => navigate('/estudiante/dashboard')} className="btn-back">
+            {/* Header con navegación */}
+            <div className="resultado-nav">
+                <button 
+                    className="btn-back"
+                    onClick={() => navigate('/estudiante/dashboard')}
+                >
                     <ArrowLeft size={20} />
                     Volver
                 </button>
-                <div className="resultado-actions">
-                    <button className="btn-icon">
-                        <Download size={20} />
-                    </button>
-                    <button className="btn-icon">
-                        <Share2 size={20} />
-                    </button>
-                </div>
             </div>
 
-            {/* Hero Section */}
+            {/* Título y Celebración */}
             <div className="resultado-hero">
                 <div className="hero-content">
-                    <h1>¡Resultados Completados! 🎉</h1>
+                    <h1>¡Felicitaciones!</h1>
                     <p>Has completado exitosamente: <strong>{resultado.cuestionario}</strong></p>
                     <p className="fecha">Fecha: {new Date(resultado.fecha).toLocaleDateString('es-ES', {
                         year: 'numeric',
@@ -136,7 +133,7 @@ const ResultadoCuestionario = () => {
                 </div>
             </div>
 
-            {/* Resumen */}
+            {/* Resumen - SIEMPRE VISIBLE */}
             <div className="resultado-resumen">
                 <div className="stat-box">
                     <Award size={32} />
@@ -161,7 +158,7 @@ const ResultadoCuestionario = () => {
                 </div>
             </div>
 
-            {/* Recomendaciones Mejoradas */}
+            {/* Recomendaciones o Estado Vacío */}
             <div className="recomendaciones-section">
                 <div className="section-header">
                     <h2>
@@ -177,29 +174,26 @@ const ResultadoCuestionario = () => {
                             <div 
                                 key={rec.id} 
                                 className="recomendacion-card-mejorada"
-                                style={{
-                                    borderLeft: `4px solid ${getNivelColor(rec.nivel)}`,
-                                    animationDelay: `${index * 0.1}s`
-                                }}
+                                style={{ animationDelay: `${index * 0.1}s` }}
                             >
-                                {/* Header de la Tarjeta */}
+                                {/* Header */}
                                 <div className="recomendacion-header">
                                     <div className="recomendacion-ranking">
-                                        <span className="ranking-numero">#{index + 1}</span>
+                                        <div className="ranking-numero">
+                                            {index + 1}
+                                        </div>
                                     </div>
+
                                     <div className="recomendacion-titulo">
                                         <h3>{rec.carrera}</h3>
                                         <div className="recomendacion-meta">
-                                            <span 
-                                                className="nivel-badge"
-                                                style={{ backgroundColor: getNivelColor(rec.nivel) }}
-                                            >
-                                                {getNivelIcon(rec.nivel)}
+                                            <span className="nivel-badge">
+                                                <Target size={16} />
                                                 {rec.nivel}
                                             </span>
                                             <span className="score-badge">
-                                                <Star size={16} fill="currentColor" />
-                                                {rec.score}% Afinidad
+                                                <Star size={16} />
+                                                {rec.score}% Match
                                             </span>
                                         </div>
                                     </div>
@@ -208,21 +202,18 @@ const ResultadoCuestionario = () => {
                                 {/* Barra de Progreso */}
                                 <div className="score-bar-container">
                                     <div 
-                                        className="score-bar"
-                                        style={{ 
-                                            width: `${rec.score}%`,
-                                            backgroundColor: getNivelColor(rec.nivel)
-                                        }}
+                                        className="score-bar" 
+                                        style={{ width: `${rec.score}%` }}
                                     >
                                         <span className="score-text">{rec.score}%</span>
                                     </div>
                                 </div>
 
-                                {/* Descripción con IA */}
+                                {/* Descripción */}
                                 <div className="recomendacion-descripcion">
                                     <div className="ia-indicator">
-                                        <Sparkles size={16} />
-                                        <span>Análisis personalizado con IA</span>
+                                        <Sparkles size={14} />
+                                        Generado con IA
                                     </div>
                                     <p>{rec.descripcion}</p>
                                 </div>
@@ -241,9 +232,47 @@ const ResultadoCuestionario = () => {
                     </div>
                 ) : (
                     <div className="empty-recomendaciones">
-                        <TrendingUp size={64} color="#cbd5e0" />
+                        <div className="empty-icon-wrapper">
+                            <AlertCircle size={72} />
+                        </div>
                         <h3>No se generaron recomendaciones</h3>
-                        <p>Intenta completar el cuestionario nuevamente</p>
+                        <p className="empty-subtitle">
+                            Hubo un problema al procesar tus resultados con la Inteligencia Artificial
+                        </p>
+                        
+                        <div className="empty-details">
+                            <div className="empty-detail-item">
+                                <HelpCircle size={20} />
+                                <div>
+                                    <strong>¿Por qué pasó esto?</strong>
+                                    <p>El sistema de IA puede estar temporalmente no disponible o experimentando problemas técnicos.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="empty-actions">
+                            <button 
+                                className="btn-regenerar"
+                                onClick={handleRegenerar}
+                                disabled={regenerando}
+                            >
+                                <RefreshCw size={20} className={regenerando ? 'spinning' : ''} />
+                                {regenerando ? 'Regenerando...' : 'Intentar Nuevamente'}
+                            </button>
+                            <button 
+                                className="btn-contactar"
+                                onClick={() => window.location.href = 'mailto:soporte@vocared.com'}
+                            >
+                                Contactar Soporte
+                            </button>
+                        </div>
+
+                        <div className="empty-note">
+                            <p>
+                                <strong>Nota:</strong> Tus respuestas fueron guardadas correctamente. 
+                                Puedes volver al dashboard e intentar más tarde, o contactar con soporte para ayuda.
+                            </p>
+                        </div>
                     </div>
                 )}
             </div>
@@ -254,15 +283,18 @@ const ResultadoCuestionario = () => {
                     className="btn-secondary"
                     onClick={() => navigate('/estudiante/dashboard')}
                 >
+                    <ArrowLeft size={20} />
                     Volver al Dashboard
                 </button>
-                <button 
-                    className="btn-primary"
-                    onClick={() => {/* Implementar compartir */}}
-                >
-                    <Share2 size={20} />
-                    Compartir Resultados
-                </button>
+                {resultado.recomendaciones && resultado.recomendaciones.length > 0 && (
+                    <button 
+                        className="btn-primary"
+                        onClick={() => {/* Implementar compartir */}}
+                    >
+                        <Share2 size={20} />
+                        Compartir Resultados
+                    </button>
+                )}
             </div>
         </div>
     );

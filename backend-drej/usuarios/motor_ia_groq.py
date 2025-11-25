@@ -233,7 +233,7 @@ Responde SOLO con la descripción, sin introducción."""
 
             # Llamar a Groq
             response = self.groq_client.chat.completions.create(
-                model="openai/gpt-oss-120b",  # Modelo rápido y bueno
+                model="llama-3.3-70b-versatile",  # Modelo rápido y bueno
                 messages=[
                     {
                         "role": "system",

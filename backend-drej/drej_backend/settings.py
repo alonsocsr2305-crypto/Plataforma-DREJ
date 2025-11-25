@@ -197,3 +197,5 @@ EMAIL_TIMEOUT = 10
 # URL del frontend para links de recuperación
 FRONTEND_URL = 'http://localhost:3000'  # Cambiar en producción
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hora en segundos'
+
+GROQ_API_KEY = config('GROQ_API_KEY')

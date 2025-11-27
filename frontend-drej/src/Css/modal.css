@@ -1,10 +1,29 @@
-/* ============================================
-   MODAL DE REGISTRO - VocaRed (DISEÑO HORIZONTAL)
-============================================ */
+/* ========================================
+   PRIORIDAD: INPUTS DE LOGIN Y REGISTRO
+   ======================================== */
+
+/* Inputs generales - VERDE para login/registro */
+.login-form input,
+.dni-form input {
+    width: 100%;
+    padding: 12px 16px !important; /* Espaciado original */
+    border: 2px solid #e1e8ed !important;
+    border-radius: 8px !important;
+    font-size: 15px !important;
+    color: #2c3e50 !important;
+    transition: all 0.3s ease !important;
+}
+
+.login-form input:focus,
+.register-form input:focus,
+.dni-form input:focus {
+    outline: none !important;
+    border-color: #28a745 !important; /* VERDE */
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1) !important; /* VERDE */
+}
 
 /* Overlay del Modal */
 .modal {
-    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -23,8 +42,8 @@
 
 /* Overlay del Modal */
 .modal {
-    display: none;
-    position: fixed;
+    display: none ;
+    position: fixed !important;
     top: 0;
     left: 0;
     width: 100%;

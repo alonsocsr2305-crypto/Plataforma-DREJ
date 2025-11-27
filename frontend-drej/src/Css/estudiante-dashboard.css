@@ -1030,3 +1030,56 @@ input:checked + .slider:before {
         font-size: 40px;
     }
 }
+
+/* En el CSS del módulo de cuestionarios del estudiante */
+.cuestionario-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    justify-content: flex-end;
+}
+
+.btn-ver-resultados,
+.btn-volver-dar,
+.btn-comenzar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-ver-resultados {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-ver-resultados:hover {
+    background: #138496;
+    transform: translateY(-2px);
+}
+
+.btn-volver-dar {
+    background: #ffc107;
+    color: #2c3e50;
+}
+
+.btn-volver-dar:hover {
+    background: #e0a800;
+    transform: translateY(-2px);
+}
+
+.btn-comenzar {
+    background: #28a745;
+    color: white;
+}
+
+.btn-comenzar:hover {
+    background: #218838;
+    transform: translateY(-2px);
+}

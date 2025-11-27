@@ -21,6 +21,6 @@ urlpatterns = [
     path('api/orientador/cuestionarios/crear/', views_orientador.crear_cuestionario, name='crear-cuestionario'),
     path('api/orientador/cuestionarios/<uuid:cuestionario_id>/actualizar/', views_orientador.actualizar_cuestionario, name='actualizar-cuestionario'),
     path('api/orientador/cuestionarios/<uuid:cuestionario_id>/eliminar/', views_orientador.eliminar_cuestionario, name='eliminar-cuestionario'),
-    path('api/estudiante/cuestionarios/<uuid:cuestionario_id>/reiniciar/', views_orientador.reiniciar_cuestionario, name='reiniciar-cuestionario'),
-    path('api/estudiante/cuestionarios/<uuid:cuestionario_id>/verificar-retomar/', views_orientador.verificar_puede_retomar,name='verificar-puede-retomar')
+    path('estudiante/cuestionarios/<int:cuestionario_id>/verificar-retomar/', views_orientador.verificar_puede_retomar, name='verificar-puede-retomar'),
+    path('estudiante/cuestionarios/<int:cuestionario_id>/reiniciar/', views_orientador.reiniciar_cuestionario, name='reiniciar-cuestionario'),
 ]

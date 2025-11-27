@@ -11,10 +11,13 @@ import {
     Calendar,
     Clock,
     CheckCircle,
-    AlertCircle
+    AlertCircle,
+    RefreshCw,
+    Eye
 } from 'lucide-react';
 import { authAPI } from '../services/Api';
 import { cuestionariosAPI } from '../services/cuestionarios';
+import RetakeQuestionnaireModal from './RetakeQuestionnaireModal';
 
 import '../Css/estudiante-dashboard.css';
 
@@ -27,6 +30,57 @@ const EstudianteDashboard = () => {
     const handleVerResultados = (intentoId) => {
         console.log('📊 [CUESTIONARIOS] Ver resultados del intento:', intentoId);
         navigate(`/estudiante/resultado/${intentoId}`);
+    };
+
+    const [showRetakeModal, setShowRetakeModal] = useState(false);
+    const [selectedCuestionario, setSelectedCuestionario] = useState(null);
+    const [resultadoAnterior, setResultadoAnterior] = useState(null);
+
+    const handleRetakeClick = async (cuestionarioId) => {
+        // Verificar si puede retomar
+        const token = localStorage.getItem('access_token'); 
+
+        const response = await fetch(
+            `http://localhost:8000/api/estudiante/cuestionarios/${cuestionarioId}/verificar-retomar/`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.puede_retomar) {
+            setSelectedCuestionario(cuestionarioId);
+            setResultadoAnterior(data.resultado_anterior);
+            setShowRetakeModal(true);
+        }
+
+    };
+
+    const handleConfirmRetake = async (razon) => {
+        const response = await fetch(
+            `http://localhost:8000/api/estudiante/cuestionarios/${selectedCuestionario}/reiniciar/`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ razon })
+            }
+        );
+
+        if (response.ok) {
+            setShowRetakeModal(false);
+            // Redirigir al cuestionario
+            window.location.href = `/estudiante/cuestionario/${selectedCuestionario}`;
+        }
     };
 
     // Datos de ejemplo - en producción vendrían del backend
@@ -226,7 +280,16 @@ const EstudianteDashboard = () => {
                 {/* Contenido dinámico según módulo activo */}
                 <div className="dashboard-content">
                     {activeModule === 'inicio' && <InicioModule data={dashboardData} />}
-                    {activeModule === 'cuestionarios' && <CuestionariosModule />}
+                    {activeModule === 'cuestionarios' && (
+                        <CuestionariosModule 
+                            handleRetakeClick={handleRetakeClick}
+                            showRetakeModal={showRetakeModal}
+                            setShowRetakeModal={setShowRetakeModal}
+                            selectedCuestionario={selectedCuestionario}
+                            resultadoAnterior={resultadoAnterior}
+                            handleConfirmRetake={handleConfirmRetake}
+                        />
+                    )}
                     {activeModule === 'resultados' && <ResultadosModule />}
                     {activeModule === 'perfil' && <PerfilModule userData={userData} />}
                     {activeModule === 'configuracion' && <ConfiguracionModule userData={userData} />}
@@ -344,8 +407,15 @@ const InicioModule = ({ data }) => {
 // ============================================
 // MÓDULO: CUESTIONARIOS
 // ============================================
-const CuestionariosModule = () => {
-    const navigate = useNavigate(); // Agrega esto al inicio del componente
+const CuestionariosModule = ({ 
+    handleRetakeClick,
+    showRetakeModal,
+    setShowRetakeModal,
+    selectedCuestionario,
+    resultadoAnterior,
+    handleConfirmRetake
+}) => {
+    const navigate = useNavigate(); 
     const [cuestionarios, setCuestionarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -451,19 +521,42 @@ const CuestionariosModule = () => {
                                 </div>
                             </div>
 
-                            <button 
-                                className={`cuestionario-button ${cuestionario.completado ? 'secondary' : 'primary'}`}
-                                onClick={() => {
-                                    if (cuestionario.completado && cuestionario.intento_id) {
-                                        handleVerResultados(cuestionario.intento_id);
-                                    } else {
-                                        handleIniciarCuestionario(cuestionario.id);
-                                    }
-                                }}
-                            >
-                                {cuestionario.completado ? 'Ver Resultados' : 'Comenzar Test'}
-                                <ChevronRight size={18} />
-                            </button>
+                            <div className="cuestionario-actions">
+                                {cuestionario.completado && (
+                                    <>
+                                        <button 
+                                            className="btn-primary"
+                                            onClick={handleVerResultados}
+                                        >
+                                            <Eye size={18} />
+                                            Ver Resultados
+                                        </button>
+                                        
+                                        <button 
+                                            className="btn-primary"
+                                            onClick={() => handleRetakeClick(cuestionario.id, cuestionario)}
+                                        >
+                                            <RefreshCw size={18} />
+                                            Volver a Dar </button>
+                                            <RetakeQuestionnaireModal
+                                                isOpen={showRetakeModal}
+                                                onClose={() => setShowRetakeModal(false)}
+                                                cuestionario={selectedCuestionario}
+                                                resultadoAnterior={resultadoAnterior}
+                                                onConfirm={handleConfirmRetake}
+                                            />
+                                    </>
+                                )}
+                                
+                                {!cuestionario.completado && (
+                                    <button 
+                                        className="btn-comenzar"
+                                        onClick={() => navigate(`/estudiante/cuestionario/${cuestionario.id}`)}
+                                    >
+                                        Comenzar
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>

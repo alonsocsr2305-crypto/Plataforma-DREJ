@@ -44,7 +44,7 @@ const OrientadorDashboard = () => {
             const token = localStorage.getItem('token');
             
             if (!token) {
-                navigate('/');
+                navigate('/orientador/dashboard');
                 return;
             }
 
@@ -73,24 +73,11 @@ const OrientadorDashboard = () => {
 
     const loadCuestionarios = async () => {
         try {
-            // Aquí llamarías a tu API para obtener cuestionarios
-            // const response = await fetch('API_URL/cuestionarios/', {
-            //     headers: { 'Authorization': `Token ${localStorage.getItem('token')}` }
-            // });
-            // const data = await response.json();
-            
-            // Datos de ejemplo
-            const data = [
-                {
-                    id: 1,
-                    titulo: 'Test de Intereses Vocacionales',
-                    descripcion: 'Cuestionario para identificar áreas de interés',
-                    num_preguntas: 20,
-                    activo: true,
-                    fecha_creacion: '2024-11-01',
-                    respuestas_totales: 45
-                }
-            ];
+
+            const response = await fetch('/cuestionarios/', {
+                 headers: { 'Authorization': `Token ${localStorage.getItem('token')}` }
+             });
+            const data = await response.json();
             
             setCuestionarios(data);
         } catch (err) {

@@ -84,29 +84,22 @@ const Register = ({ isOpen, onClose }) => {
      */
     const handleDNIBlur = async () => {
         const dni = formData.dni.trim();
-        
-        // Solo validar si tiene 8 dígitos
+    
         if (dni.length !== 8) {
-            useDNIValidation({ checking: false, available: null });
-            return;
+            return;  // Solo retorna, no uses el hook
         }
-
-        useDNIValidation({ checking: true, available: null });
         
         try {
             const result = await authAPI.checkDNI(dni);
             
             if (result.exists) {
                 setErrors(prev => ({ ...prev, dni: 'Este DNI ya está registrado' }));
-                useDNIValidation({ checking: false, available: false });
             } else {
-                // Limpiar error si existía
                 setErrors(prev => {
                     const newErrors = { ...prev };
                     delete newErrors.dni;
                     return newErrors;
                 });
-                useDNIValidation({ checking: false, available: true });
             }
         } catch (error) {
             console.error('[DNI Check] Error:', error);
@@ -310,7 +303,7 @@ const Register = ({ isOpen, onClose }) => {
         }
         
         // Validación DNI
-        if (!useDNIValidation(formData.dni)) {
+        if (!/^\d{8}$/.test(formData.dni)) {
             newErrors.dni = 'DNI inválido (8 dígitos)';
         }
         
@@ -417,10 +410,9 @@ const Register = ({ isOpen, onClose }) => {
                 break;
                 
             case 'dni':
-                if (!useDNIValidation(value)) {
+                if (!/^\d{8}$/.test(value)) {
                     fieldErrors.dni = 'DNI inválido (8 dígitos)';
                 }
-                // No llamar handleDNIBlur aquí porque ya tiene su propio handler
                 break;
                 
             case 'telefono':
@@ -548,7 +540,6 @@ const Register = ({ isOpen, onClose }) => {
 
             setShowSuccessModal(true);
             
-            // Limpiar formulario
             setFormData({
                 nombres:'', apellidoPaterno:'', 
                 apellidoMaterno:'', dni:'', telefono:'', fechaNacimiento:'', 
@@ -558,11 +549,11 @@ const Register = ({ isOpen, onClose }) => {
                 areaEspecializacion: '', perfilProfesional: ''
             });
             setAcceptTerms(false);
-            strength({ level: 0, label: '' });
 
+            // ✅ AGREGAR ESTO - Cerrar automáticamente después de 3 segundos
             setTimeout(() => {
                 setShowSuccessModal(false);
-                onClose && onClose();
+                onClose();  // Cerrar el modal de registro también
             }, 3000);
 
         } catch (err) {
@@ -794,15 +785,6 @@ const Register = ({ isOpen, onClose }) => {
                                                     emailValidation.valid === true ? '#4CAF50' : undefined
                                     }}
                                 />
-                                {emailValidation.message && (
-                                    <div style={{
-                                        marginTop: '0.25rem',
-                                        fontSize: '0.875rem',
-                                        color: emailValidation.valid ? '#4CAF50' : '#d32f2f'
-                                    }}>
-                                        {emailValidation.message}
-                                    </div>
-                                )}
                                 {errors.correo && <span className="error-text">{errors.correo}</span>}
                             </div>
 

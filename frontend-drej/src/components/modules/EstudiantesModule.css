@@ -1,0 +1,108 @@
+/* ========================================
+   ESTUDIANTES MODULE - ESTILOS
+   ======================================== */
+
+.estudiantes-module {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 500px;
+}
+
+.module-placeholder {
+    max-width: 600px;
+    text-align: center;
+    padding: 60px 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.placeholder-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 24px;
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.module-placeholder h2 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 12px 0;
+}
+
+.module-placeholder p {
+    font-size: 16px;
+    color: #6c757d;
+    line-height: 1.6;
+    margin: 0 0 24px 0;
+}
+
+.coming-soon {
+    margin-bottom: 32px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 8px 20px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.features-list {
+    text-align: left;
+    background: #f8f9fa;
+    padding: 24px;
+    border-radius: 12px;
+    margin-top: 24px;
+}
+
+.features-list h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0 0 16px 0;
+}
+
+.features-list ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.features-list li {
+    padding: 8px 0;
+    font-size: 14px;
+    color: #6c757d;
+    border-bottom: 1px solid #e1e8ed;
+}
+
+.features-list li:last-child {
+    border-bottom: none;
+}
+
+@media (max-width: 640px) {
+    .module-placeholder {
+        padding: 40px 24px;
+    }
+
+    .placeholder-icon {
+        width: 100px;
+        height: 100px;
+    }
+
+    .module-placeholder h2 {
+        font-size: 24px;
+    }
+}

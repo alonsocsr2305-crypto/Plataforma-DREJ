@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { cuestionariosAPI } from '../services/cuestionarios';
 import '../Css/resultado-cuestionario.css';
+import RetakeQuestionnaireModal from '../components/RetakeQuestionnaireModal';
+
 
 const ResultadoCuestionario = () => {
     const navigate = useNavigate();
@@ -33,6 +35,10 @@ const ResultadoCuestionario = () => {
     const [error, setError] = useState('');
     const [regenerando, setRegenerando] = useState(false);
 
+    const [showRetakeModal, setShowRetakeModal] = useState(false);
+    const [selectedCuestionario, setSelectedCuestionario] = useState(null);
+    const [resultadoAnterior, setResultadoAnterior] = useState(null);
+    
     useEffect(() => {
         if (intentoId) {
             cargarResultado(intentoId);
@@ -75,6 +81,62 @@ const ResultadoCuestionario = () => {
             setRegenerando(false);
         }
     };
+
+    const handleRetakeClick = async (cuestionarioId) => {
+        // Verificar si puede retomar
+        const response = await fetch(
+            `http://localhost:8000/api/estudiante/cuestionarios/${cuestionarioId}/verificar-retomar/`,
+            {
+                headers: {
+                    'Authorization': `Token ${localStorage.getItem('token')}`
+                }
+            }
+        );
+        const data = await response.json();
+        
+        if (data.puede_retomar) {
+            setSelectedCuestionario(cuestionarioId);
+            setResultadoAnterior(data.resultado_anterior);
+            setShowRetakeModal(true);
+        }
+    };
+
+    const handleConfirmRetake = async (razon) => {
+        const response = await fetch(
+            `http://localhost:8000/api/estudiante/cuestionarios/${selectedCuestionario}/reiniciar/`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({ razon })
+            }
+        );
+
+        if (response.ok) {
+            setShowRetakeModal(false);
+            // Redirigir al cuestionario
+            window.location.href = `/cuestionario/${selectedCuestionario}`;
+        }
+    };
+
+    return (
+        <div>
+            {/* Tu contenido de resultados */}
+            <button onClick={() => handleRetakeClick(cuestionarioId)}>
+                Volver a Dar
+            </button>
+
+            <RetakeQuestionnaireModal
+                isOpen={showRetakeModal}
+                onClose={() => setShowRetakeModal(false)}
+                cuestionario={selectedCuestionario}
+                resultadoAnterior={resultadoAnterior}
+                onConfirm={handleConfirmRetake}
+            />
+        </div>
+    );
 
     if (loading) {
         return (

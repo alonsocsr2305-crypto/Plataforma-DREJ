@@ -153,12 +153,9 @@ const Login = () => {
                 navigate('/estudiante/dashboard');
             } else if (userData.rol.tipo_usuario === 'Orientador') {
                 console.log('👨‍🏫 [LOGIN] Redireccionando a dashboard de orientador...');
-                navigate('/dashboard'); // Puede cambiarse a /orientador/dashboard cuando esté listo
-            } else {
-                console.log('🎯 [LOGIN] Redireccionando a dashboard general...');
-                navigate('/dashboard');
+                navigate('/orientador/dashboard');
             }
-            
+
         } catch (err) {
             console.error('❌ [LOGIN] Error:', err);
             if (err.response) {

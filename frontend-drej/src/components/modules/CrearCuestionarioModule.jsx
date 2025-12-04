@@ -102,7 +102,7 @@ const CrearCuestionarioModule = ({ onSuccess }) => {
         setLoading(true);
 
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('access_token');
             
             const payload = {
                 ...cuestionario,
@@ -115,11 +115,11 @@ const CrearCuestionarioModule = ({ onSuccess }) => {
             };
 
             // Aquí harías la llamada a tu API
-            const response = await fetch('http://localhost:8000/api/cuestionarios/crear/', {
+            const response = await fetch('http://localhost:8000/api/api/orientador/cuestionarios/crear/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Token ${token}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });

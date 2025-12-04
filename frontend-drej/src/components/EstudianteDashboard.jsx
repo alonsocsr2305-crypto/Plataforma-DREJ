@@ -70,7 +70,7 @@ const EstudianteDashboard = () => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('access_token')}`
                 },
                 body: JSON.stringify({ razon })
             }
@@ -446,9 +446,9 @@ const CuestionariosModule = ({
         navigate(`/estudiante/cuestionario/${cuestionarioId}`);
     };
 
-    const handleVerResultados = (intentoId) => {
-        console.log('📊 [CUESTIONARIOS] Ver resultados del intento:', intentoId);
-        navigate(`/estudiante/resultado/${intentoId}`);
+    const handleVerResultados = (cuestionarioId) => {
+        console.log('📊 [CUESTIONARIOS] Ver resultados del cuestionario:', cuestionarioId);
+        navigate(`/estudiante/resultado/${cuestionarioId}`);
     };
 
     if (loading) {
@@ -526,7 +526,7 @@ const CuestionariosModule = ({
                                     <>
                                         <button 
                                             className="btn-primary"
-                                            onClick={handleVerResultados}
+                                            onClick={() => handleVerResultados(cuestionario.intento_id)}
                                         >
                                             <Eye size={18} />
                                             Ver Resultados
@@ -538,13 +538,6 @@ const CuestionariosModule = ({
                                         >
                                             <RefreshCw size={18} />
                                             Volver a Dar </button>
-                                            <RetakeQuestionnaireModal
-                                                isOpen={showRetakeModal}
-                                                onClose={() => setShowRetakeModal(false)}
-                                                cuestionario={selectedCuestionario}
-                                                resultadoAnterior={resultadoAnterior}
-                                                onConfirm={handleConfirmRetake}
-                                            />
                                     </>
                                 )}
                                 
@@ -559,6 +552,13 @@ const CuestionariosModule = ({
                             </div>
                         </div>
                     ))}
+                    <RetakeQuestionnaireModal
+                        isOpen={showRetakeModal}
+                        onClose={() => setShowRetakeModal(false)}
+                        cuestionario={selectedCuestionario}
+                        resultadoAnterior={resultadoAnterior}
+                        onConfirm={handleConfirmRetake}
+                    />
                 </div>
             )}
 

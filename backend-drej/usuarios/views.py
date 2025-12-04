@@ -166,9 +166,9 @@ def validate_domain(request):
         'message': 'Dominio no permitido para orientadores'
     })
 
-#@api_view(['GET'])
-#@permission_classes([AllowAny])
-#def consultar_reniec(request, dni):
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def consultar_reniec(request, dni):
     """
     Consultar datos de una persona por DNI usando Factiliza API
     """
@@ -253,79 +253,7 @@ def validate_domain(request):
             "success": False,
             "message": "Error interno del servidor" 
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def consultar_reniec_mock(request, dni):
-    """
-    MOCK para pruebas - Consultar DNI desde tabla local sin consumir API
-    
-    GET /api/reniec/mock/<dni>/
-    
-    Usa esta ruta para pruebas y conserva tus 98 consultas de la API real.
-    """
-    
-    # Base de datos de prueba con DNIs ficticios
-    DNIS_PRUEBA = {
-        '12345678': {
-            'nombres': 'JUAN CARLOS',
-            'apellidoPaterno': 'PEREZ',
-            'apellidoMaterno': 'GARCIA',
-            'fechaNacimiento': '1995-05-15'
-        },
-        '11111111': {
-            'nombres': 'MARIA ELENA',
-            'apellidoPaterno': 'RODRIGUEZ',
-            'apellidoMaterno': 'TORRES',
-            'fechaNacimiento': '1998-08-20'
-        },
-        '22222222': {
-            'nombres': 'PEDRO JOSE',
-            'apellidoPaterno': 'SANCHEZ',
-            'apellidoMaterno': 'LOPEZ',
-            'fechaNacimiento': '2000-01-10'
-        },
-        '33333333': {
-            'nombres': 'ANA SOFIA',
-            'apellidoPaterno': 'MARTINEZ',
-            'apellidoMaterno': 'DIAZ',
-            'fechaNacimiento': '1997-12-05'
-        },
-        '44444444': {
-            'nombres': 'CARLOS ALBERTO',
-            'apellidoPaterno': 'FERNANDEZ',
-            'apellidoMaterno': 'QUISPE',
-            'fechaNacimiento': '1999-03-25'
-        }
-    }
-    
-    # Validar formato de DNI
-    if not dni or len(dni) != 8 or not dni.isdigit():
-        return Response({
-            "success": False,
-            "message": "DNI inválido. Debe tener 8 dígitos."
-        }, status=status.HTTP_400_BAD_REQUEST)
-    
-    # Buscar en la base de datos de prueba
-    if dni in DNIS_PRUEBA:
-        data = DNIS_PRUEBA[dni]
-        logger.info(f"[MOCK] DNI encontrado en base de prueba: {dni}")
-        
-        return Response({
-            "success": True,
-            "dni": dni,
-            "nombres": data['nombres'],
-            "apellidoPaterno": data['apellidoPaterno'],
-            "apellidoMaterno": data['apellidoMaterno'],
-            "fechaNacimiento": data['fechaNacimiento'],
-        }, status=status.HTTP_200_OK)
-    else:
-        logger.warning(f"[MOCK] DNI no encontrado en base de prueba: {dni}")
-        return Response({
-            "success": False,
-            "message": "DNI no encontrado en base de datos de prueba"
-        }, status=status.HTTP_404_NOT_FOUND)
-    
+   
     
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

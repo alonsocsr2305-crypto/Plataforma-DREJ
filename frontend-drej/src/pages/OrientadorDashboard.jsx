@@ -40,32 +40,57 @@ const OrientadorDashboard = () => {
     const loadOrientadorData = async () => {
         try {
             setLoading(true);
-            // Aquí llamarías a tu API para obtener datos del orientador
-            const token = localStorage.getItem('token');
+            setError(null);
+            
+            // ⭐ OBTENER TOKEN DE AUTENTICACIÓN
+            const token = localStorage.getItem('access_token'); // Cambiar de 'token' a 'access_token'
             
             if (!token) {
-                navigate('/orientador/dashboard');
+                console.error('❌ No hay token de autenticación');
+                navigate('/');
                 return;
             }
 
-            // Simular carga de datos (reemplazar con tu API real)
-            const data = {
-                nombre: localStorage.getItem('nombre') || 'Orientador',
-                rol: 'Orientador',
-                institucion: localStorage.getItem('institucion') || 'Institución',
-                estadisticas: {
-                    totalEstudiantes: 0,
-                    cuestionariosActivos: 0,
-                    respuestasHoy: 0,
-                    promedioCompletitud: 0
+            console.log('🔐 Token encontrado, llamando a API...');
+
+            // ⭐ LLAMADA REAL A LA API DEL BACKEND
+            const response = await fetch('http://localhost:8000/api/api/orientador/dashboard/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
-            };
+            });
+
+            console.log('📡 Respuesta de API:', response.status);
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    console.error('❌ Token inválido o expirado');
+                    localStorage.clear();
+                    navigate('/');
+                    return;
+                }
+                if (response.status === 403) {
+                    console.error('❌ No tienes permisos de orientador');
+                    setError('No tienes permisos de orientador. Por favor, contacta al administrador.');
+                    setLoading(false);
+                    return;
+                }
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('✅ Datos del orientador cargados:', data);
 
             setOrientadorData(data);
+            
+            // Cargar cuestionarios
             await loadCuestionarios();
+            
             setLoading(false);
         } catch (err) {
-            console.error('Error al cargar datos del orientador:', err);
+            console.error('❌ Error al cargar datos del orientador:', err);
             setError('Error al cargar el dashboard. Por favor, intenta de nuevo.');
             setLoading(false);
         }
@@ -73,15 +98,25 @@ const OrientadorDashboard = () => {
 
     const loadCuestionarios = async () => {
         try {
-
-            const response = await fetch('/cuestionarios/', {
-                 headers: { 'Authorization': `Token ${localStorage.getItem('token')}` }
-             });
-            const data = await response.json();
+            const token = localStorage.getItem('access_token');
             
+            const response = await fetch('http://localhost:8000/api/api/orientador/cuestionarios/', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('📋 Cuestionarios cargados:', data);
             setCuestionarios(data);
         } catch (err) {
-            console.error('Error al cargar cuestionarios:', err);
+            console.error('❌ Error al cargar cuestionarios:', err);
         }
     };
 
@@ -129,6 +164,15 @@ const OrientadorDashboard = () => {
                     <h2>⚠️ Error</h2>
                     <p>{error}</p>
                     <button onClick={() => navigate('/')}>Volver al Login</button>
+                    <button 
+                        onClick={() => {
+                            setError(null);
+                            loadOrientadorData();
+                        }}
+                        style={{ marginLeft: '10px' }}
+                    >
+                        Reintentar
+                    </button>
                 </div>
             </div>
         );
@@ -181,23 +225,28 @@ const OrientadorDashboard = () => {
 
                     <div className="sidebar-divider"></div>
 
-                    <button className="nav-item logout-btn" onClick={handleLogout}>
+                    <button 
+                        className="nav-item logout-btn"
+                        onClick={handleLogout}
+                    >
                         <LogOut size={20} />
                         <span>Cerrar Sesión</span>
                     </button>
                 </nav>
 
-                <div className="sidebar-footer">
-                    <div className="user-info">
-                        <div className="user-avatar">
-                            {orientadorData?.nombre?.charAt(0) || 'O'}
-                        </div>
-                        <div className="user-details">
-                            <p className="user-name">{orientadorData?.nombre}</p>
-                            <p className="user-role">{orientadorData?.institucion}</p>
+                {orientadorData && (
+                    <div className="sidebar-footer">
+                        <div className="user-info">
+                            <div className="user-avatar">
+                                {orientadorData.nombre?.charAt(0) || 'O'}
+                            </div>
+                            <div className="user-details">
+                                <p className="user-name">{orientadorData.nombre}</p>
+                                <p className="user-role">{orientadorData.institucion}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </aside>
 
             {/* Main Content */}
@@ -205,16 +254,13 @@ const OrientadorDashboard = () => {
                 <header className="dashboard-header">
                     <div className="header-content">
                         <h1>
-                            {activeModule === 'estadisticas' && '📊 Panel de Estadísticas'}
-                            {activeModule === 'cuestionarios' && '📝 Gestión de Cuestionarios'}
-                            {activeModule === 'estudiantes' && '👥 Gestión de Estudiantes'}
-                            {activeModule === 'crear-cuestionario' && '✨ Crear Nuevo Cuestionario'}
+                            {activeModule === 'estadisticas' && 'Panel de Estadísticas'}
+                            {activeModule === 'cuestionarios' && 'Gestión de Cuestionarios'}
+                            {activeModule === 'estudiantes' && 'Gestión de Estudiantes'}
+                            {activeModule === 'crear-cuestionario' && 'Crear Nuevo Cuestionario'}
                         </h1>
                         <p className="header-subtitle">
-                            {activeModule === 'estadisticas' && 'Visualiza el progreso y rendimiento de tus estudiantes'}
-                            {activeModule === 'cuestionarios' && 'Administra y monitorea tus cuestionarios vocacionales'}
-                            {activeModule === 'estudiantes' && 'Revisa el progreso individual de cada estudiante'}
-                            {activeModule === 'crear-cuestionario' && 'Diseña cuestionarios personalizados para tus estudiantes'}
+                            {orientadorData?.nombre && `Bienvenido, ${orientadorData.nombre}`}
                         </p>
                     </div>
                 </header>

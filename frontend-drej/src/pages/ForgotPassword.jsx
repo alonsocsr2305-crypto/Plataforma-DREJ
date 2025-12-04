@@ -1,6 +1,8 @@
 // frontend-drej/src/pages/ForgotPassword.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Mail, Lock, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import '../Css/password-recovery.css';
 
 const ForgotPassword = () => {
   const [identifier, setIdentifier] = useState('');
@@ -47,34 +49,38 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            ¿Olvidaste tu contraseña?
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+    <div className="password-recovery-container">
+      <div className="recovery-card">
+        {/* Header */}
+        <div className="recovery-header">
+          <div className="recovery-icon">
+            <Lock size={36} />
+          </div>
+          <h2>¿Olvidaste tu contraseña?</h2>
+          <p>
             Ingresa tu email o DNI y te enviaremos instrucciones para recuperarla
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {/* Formulario */}
+        <form className="recovery-form" onSubmit={handleSubmit}>
+          {/* Mensaje de alerta */}
           {message.text && (
-            <div
-              className={`p-4 rounded-md ${
-                message.type === 'success'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}
-            >
-              {message.text}
+            <div className={`alert alert-${message.type}`}>
+              <span className="alert-icon">
+                {message.type === 'success' ? (
+                  <CheckCircle size={20} />
+                ) : (
+                  <AlertCircle size={20} />
+                )}
+              </span>
+              <span>{message.text}</span>
             </div>
           )}
 
-          <div>
-            <label htmlFor="identifier" className="sr-only">
-              Email o DNI
-            </label>
+          {/* Campo de entrada */}
+          <div className="form-group">
+            <label htmlFor="identifier">Email o DNI</label>
             <input
               id="identifier"
               name="identifier"
@@ -82,32 +88,58 @@ const ForgotPassword = () => {
               required
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
-              className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Email o DNI"
+              placeholder="ejemplo@correo.com o 12345678"
               disabled={loading}
             />
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Enviando...' : 'Enviar instrucciones'}
-            </button>
-          </div>
+          {/* Botón de envío */}
+          <button
+            type="submit"
+            className="btn-primary"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <div className="loading-spinner"></div>
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Mail size={20} />
+                Enviar instrucciones
+              </>
+            )}
+          </button>
 
-          <div className="text-center">
+          {/* Link para volver al login */}
+          <div className="recovery-link">
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="text-sm text-blue-600 hover:text-blue-500"
+              className="btn-link"
             >
+              <ArrowLeft size={16} />
               Volver al inicio de sesión
             </button>
           </div>
         </form>
+
+        {/* Información adicional */}
+        <div style={{ 
+          marginTop: '32px', 
+          padding: '16px', 
+          background: '#f9fafb', 
+          borderRadius: '10px',
+          fontSize: '13px',
+          color: '#6b7280',
+          lineHeight: '1.6'
+        }}>
+          <strong style={{ color: '#374151', display: 'block', marginBottom: '8px' }}>
+            💡 Consejo de seguridad:
+          </strong>
+          Si no recibes el correo en unos minutos, revisa tu carpeta de spam o correo no deseado.
+        </div>
       </div>
     </div>
   );

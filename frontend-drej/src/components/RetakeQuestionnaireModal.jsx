@@ -36,55 +36,56 @@ const RetakeQuestionnaireModal = ({
         });
     };
 
-    return (
-        <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content retake-modal" onClick={(e) => e.stopPropagation()}>
-                <button className="modal-close" onClick={onClose}>×</button>
+    // ✅ PREVENIR CIERRE AL HACER CLIC EN EL CONTENIDO
+    const handleOverlayClick = (e) => {
+        // Solo cerrar si el clic es en el overlay, no en el contenido
+        if (e.target === e.currentTarget) {
+            onClose();
+        }
+    };
 
-                <div className="modal-header">
-                    <div className="modal-icon retake-icon">
+    return (
+        // ✅ CLASES ESPECÍFICAS PARA EVITAR CONFLICTOS
+        <div className="retake-modal-overlay" onClick={handleOverlayClick}>
+            <div className="retake-modal-content" onClick={(e) => e.stopPropagation()}>
+                <button className="retake-modal-close" onClick={onClose}>×</button>
+
+                <div className="retake-modal-header">
+                    <div className="retake-modal-icon">
                         <RefreshCw size={28} />
                     </div>
                     <h2>Volver a dar el cuestionario</h2>
-                    <p className="modal-subtitle">
+                    <p className="retake-modal-subtitle">
                         {cuestionario?.titulo || 'Cuestionario Vocacional'}
                     </p>
                 </div>
 
-                <div className="modal-body">
+                <div className="retake-modal-body">
                     {/* Información del resultado anterior */}
                     {resultadoAnterior && (
-                        <div className="info-card warning-card">
-                            <div className="info-header">
-                                <AlertCircle size={20} />
-                                <h3>Resultado Anterior</h3>
+                        <div className="retake-info-card">
+                            <div className="retake-info-header">
+                                <Calendar size={20} color="#4a90e2" />
+                                <h3>Tu resultado anterior</h3>
                             </div>
-                            <div className="info-content">
-                                <div className="info-row">
-                                    <span className="info-label">
+                            <div className="retake-info-content">
+                                <div className="retake-info-row">
+                                    <span className="retake-info-label">
                                         <Calendar size={16} />
-                                        Fecha completado:
+                                        Fecha
                                     </span>
-                                    <span className="info-value">
-                                        {formatDate(resultadoAnterior.fecha_completado)}
-                                    </span>
-                                </div>
-                                <div className="info-row">
-                                    <span className="info-label">
-                                        <TrendingUp size={16} />
-                                        Puntaje obtenido:
-                                    </span>
-                                    <span className="info-value">
-                                        {resultadoAnterior.puntaje_total || 'N/A'}
+                                    <span className="retake-info-value">
+                                        {formatDate(resultadoAnterior.fecha)}
                                     </span>
                                 </div>
-                                {resultadoAnterior.recomendaciones_count > 0 && (
-                                    <div className="info-row">
-                                        <span className="info-label">
-                                            Recomendaciones recibidas:
+                                {resultadoAnterior.recomendaciones && (
+                                    <div className="retake-info-row">
+                                        <span className="retake-info-label">
+                                            <TrendingUp size={16} />
+                                            Recomendaciones
                                         </span>
-                                        <span className="info-value">
-                                            {resultadoAnterior.recomendaciones_count}
+                                        <span className="retake-info-value">
+                                            {resultadoAnterior.recomendaciones} carreras
                                         </span>
                                     </div>
                                 )}
@@ -93,27 +94,26 @@ const RetakeQuestionnaireModal = ({
                     )}
 
                     {/* Advertencia */}
-                    <div className="info-card alert-card">
-                        <h3>⚠️ Importante</h3>
-                        <ul className="alert-list">
+                    <div className="retake-info-card retake-alert-card">
+                        <div className="retake-info-header">
+                            <AlertCircle size={20} color="#e74c3c" />
+                            <h3>⚠️ Importante</h3>
+                        </div>
+                        <ul className="retake-alert-list">
                             <li>
-                                Tu resultado anterior será <strong>archivado</strong> pero permanecerá 
-                                disponible en tu historial
+                                Tu resultado anterior <strong>se mantendrá en el historial</strong>
                             </li>
                             <li>
-                                Podrás ver una comparación entre tus resultados anteriores y nuevos
+                                El nuevo resultado <strong>reemplazará</strong> al actual como resultado activo
                             </li>
                             <li>
-                                Deberás completar todas las preguntas nuevamente
-                            </li>
-                            <li>
-                                Las recomendaciones de IA se generarán basadas en tus nuevas respuestas
+                                Podrás comparar ambos resultados más adelante
                             </li>
                         </ul>
                     </div>
 
-                    {/* Razón opcional */}
-                    <div className="form-group">
+                    {/* Razón (opcional) */}
+                    <div className="retake-form-group">
                         <label htmlFor="razon">
                             ¿Por qué quieres volver a dar este cuestionario? (Opcional)
                         </label>
@@ -125,51 +125,51 @@ const RetakeQuestionnaireModal = ({
                             rows={3}
                             maxLength={500}
                         />
-                        <small className="form-hint">
+                        <small className="retake-form-hint">
                             {razon.length}/500 caracteres
                         </small>
                     </div>
 
                     {/* Ventajas de volver a tomar */}
-                    <div className="benefits-section">
+                    <div className="retake-benefits-section">
                         <h3>✨ Beneficios</h3>
-                        <div className="benefits-grid">
-                            <div className="benefit-item">
-                                <span className="benefit-icon">📊</span>
+                        <div className="retake-benefits-grid">
+                            <div className="retake-benefit-item">
+                                <span className="retake-benefit-icon">📊</span>
                                 <span>Seguimiento de tu evolución</span>
                             </div>
-                            <div className="benefit-item">
-                                <span className="benefit-icon">🎯</span>
+                            <div className="retake-benefit-item">
+                                <span className="retake-benefit-icon">🎯</span>
                                 <span>Confirmación de intereses</span>
                             </div>
-                            <div className="benefit-item">
-                                <span className="benefit-icon">🤖</span>
+                            <div className="retake-benefit-item">
+                                <span className="retake-benefit-icon">🤖</span>
                                 <span>Nuevas recomendaciones de IA</span>
                             </div>
-                            <div className="benefit-item">
-                                <span className="benefit-icon">📈</span>
+                            <div className="retake-benefit-item">
+                                <span className="retake-benefit-icon">📈</span>
                                 <span>Comparativa de resultados</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="modal-footer">
+                <div className="retake-modal-footer">
                     <button 
-                        className="btn-secondary" 
+                        className="retake-btn-secondary" 
                         onClick={onClose}
                         disabled={loading}
                     >
                         Cancelar
                     </button>
                     <button 
-                        className="btn-primary retake-btn" 
+                        className="retake-btn-primary" 
                         onClick={handleRetake}
                         disabled={loading}
                     >
                         {loading ? (
                             <>
-                                <div className="spinner-small"></div>
+                                <div className="retake-spinner-small"></div>
                                 Reiniciando...
                             </>
                         ) : (

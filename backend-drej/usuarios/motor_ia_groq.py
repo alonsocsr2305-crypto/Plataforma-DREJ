@@ -1,8 +1,3 @@
-# ====================================================
-# MOTOR DE IA CON GROQ
-# Archivo: backend-drej/usuarios/motor_ia_groq.py
-# ====================================================
-
 import logging
 import os
 import json
@@ -11,15 +6,8 @@ from typing import List, Dict
 from django.db import connection
 from datetime import datetime
 
-# IMPORTANTE: Instalar groq
-# pip install groq --break-system-packages
-
-try:
-    from groq import Groq
-    GROQ_AVAILABLE = True
-except ImportError:
-    GROQ_AVAILABLE = False
-    logging.warning("Groq no está instalado. Instala con: pip install groq")
+from groq import Groq
+GROQ_AVAILABLE = True
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +23,7 @@ def limpiar_texto_unicode(texto: str) -> str:
     return re.sub(r'\s+', ' ', texto).strip()
 
 # ====================================================
-# CATÁLOGO DE CARRERAS (Mismo que antes)
+# CATÁLOGO DE CARRERAS
 # ====================================================
 
 CARRERAS_POR_CATEGORIA = {
@@ -244,7 +232,7 @@ Responde SOLO con la descripción, sin introducción."""
                         "content": prompt
                     }
                 ],
-                temperature=0.7,
+                temperature=0.9,
                 max_tokens=150,
                 top_p=1.0
             )

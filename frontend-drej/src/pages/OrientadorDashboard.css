@@ -15,7 +15,7 @@
 
 .dashboard-sidebar {
     width: 280px;
-    background: linear-gradient(180deg, #4a90e2 0%, #357abd 100%);
+    background: lightblue;
     color: white;
     display: flex;
     flex-direction: column;
@@ -36,9 +36,9 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 24px;
+    font-size: 30px;
     font-weight: 700;
-    color: white;
+    color: rgb(37, 132, 234);
 }
 
 .role-badge {
@@ -68,9 +68,9 @@
     background: transparent;
     border: none;
     border-radius: 10px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 15px;
-    font-weight: 500;
+    color: rgba(37, 132, 234);
+    font-size: 20px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     margin-bottom: 6px;

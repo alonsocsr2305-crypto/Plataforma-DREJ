@@ -17,6 +17,7 @@ from .models import (
     Orientador,
     Cuestionario, 
     Pregunta, 
+    Opcion,
     Intento,
     Respuesta, 
     Recomendacion,
@@ -235,7 +236,7 @@ def listar_cuestionarios_orientador(request):
 @permission_classes([IsAuthenticated])
 def crear_cuestionario(request):
     """
-    Crea un nuevo cuestionario con sus preguntas
+    Crea un nuevo cuestionario con sus preguntas y opciones de escala Likert fijas
     """
     try:
         user = request.user
@@ -264,6 +265,15 @@ def crear_cuestionario(request):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # ✅ OPCIONES FIJAS DE ESCALA LIKERT (5 puntos)
+        OPCIONES_LIKERT = [
+            {'texto': 'Totalmente en desacuerdo', 'valor': 1, 'orden': 1},
+            {'texto': 'En desacuerdo', 'valor': 2, 'orden': 2},
+            {'texto': 'Neutral', 'valor': 3, 'orden': 3},
+            {'texto': 'De acuerdo', 'valor': 4, 'orden': 4},
+            {'texto': 'Totalmente de acuerdo', 'valor': 5, 'orden': 5}
+        ]
+        
         # Crear el cuestionario
         cuestionario = Cuestionario.objects.create(
             CuestNombre=data['titulo'],
@@ -271,9 +281,13 @@ def crear_cuestionario(request):
             CuestActivo=data.get('activo', True)
         )
         
-        # Crear las preguntas
+        print(f"✅ Cuestionario creado: {cuestionario.CuestID}")
+        
         preguntas_creadas = []
+        opciones_creadas_total = 0
+        
         for pregunta_data in data['preguntas']:
+            # Crear la pregunta
             pregunta = Pregunta.objects.create(
                 Cuest=cuestionario,
                 PregTexto=pregunta_data['texto'],
@@ -282,12 +296,36 @@ def crear_cuestionario(request):
                 PregCategoria=pregunta_data.get('categoria', 'General'),
                 PregActiva=True
             )
+            
+            print(f"✅ Pregunta creada: {pregunta.PregID} - {pregunta.PregTexto[:50]}")
+            
+            # ✅ CREAR LAS 5 OPCIONES FIJAS PARA CADA PREGUNTA
+            opciones_creadas = []
+            for opcion_likert in OPCIONES_LIKERT:
+                opcion = Opcion.objects.create(
+                    Preg=pregunta,
+                    OpcionTexto=opcion_likert['texto'],
+                    OpcionValor=opcion_likert['valor'],
+                    OpcionOrden=opcion_likert['orden']
+                )
+                opciones_creadas.append({
+                    'id': opcion.OpcionID,
+                    'texto': opcion.OpcionTexto,
+                    'valor': opcion.OpcionValor
+                })
+                opciones_creadas_total += 1
+            
+            print(f"   ✅ {len(opciones_creadas)} opciones creadas para pregunta {pregunta.PregID}")
+            
             preguntas_creadas.append({
                 'id': pregunta.PregID,
                 'orden': pregunta.PregOrden,
                 'texto': pregunta.PregTexto,
-                'categoria': pregunta.PregCategoria
+                'categoria': pregunta.PregCategoria,
+                'opciones': opciones_creadas
             })
+        
+        print(f"✅ Total opciones creadas: {opciones_creadas_total}")
         
         return Response({
             'mensaje': 'Cuestionario creado exitosamente',
@@ -296,20 +334,20 @@ def crear_cuestionario(request):
                 'titulo': cuestionario.CuestNombre,
                 'version': cuestionario.CuestVersion,
                 'num_preguntas': len(preguntas_creadas),
+                'num_opciones_total': opciones_creadas_total,
                 'activo': cuestionario.CuestActivo
             },
             'preguntas': preguntas_creadas
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
-        print(f"Error en crear_cuestionario: {str(e)}")
+        print(f"❌ Error en crear_cuestionario: {str(e)}")
         import traceback
         traceback.print_exc()
         return Response(
             {'error': f'Error al crear el cuestionario: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
-
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

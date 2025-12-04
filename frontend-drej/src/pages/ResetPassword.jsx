@@ -1,78 +1,88 @@
 // frontend-drej/src/pages/ResetPassword.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Lock, Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
+import '../Css/password-recovery-unified.css';
 
 const ResetPassword = () => {
-  const { token } = useParams();
-  const navigate = useNavigate();
-  
-  const [validatingToken, setValidatingToken] = useState(true);
-  const [tokenValid, setTokenValid] = useState(false);
-  const [formData, setFormData] = useState({
-    new_password: '',
-    confirm_password: '',
-  });
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [validatingToken, setValidatingToken] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
+  
+  const navigate = useNavigate();
+  const { token } = useParams();
 
-  // Validar token al cargar la página
+  // Validar token al cargar
   useEffect(() => {
     validateToken();
   }, [token]);
 
   const validateToken = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/auth/password-reset/validate-token/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      });
+      const response = await fetch(
+        `http://localhost:8000/api/auth/password-reset/validate-token/?token=${token}`
+      );
 
       const data = await response.json();
 
       if (response.ok && data.valid) {
         setTokenValid(true);
       } else {
+        setTokenValid(false);
         setMessage({
           type: 'error',
-          text: data.message || 'El enlace ha expirado o no es válido',
+          text: data.message || 'El enlace de recuperación ha expirado o no es válido',
         });
       }
     } catch (error) {
+      setTokenValid(false);
       setMessage({
         type: 'error',
-        text: 'Error al validar el enlace',
+        text: 'Error al validar el enlace. Por favor, solicita uno nuevo.',
       });
     } finally {
       setValidatingToken(false);
     }
   };
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  const calculatePasswordStrength = (password) => {
+    if (!password) return { level: '', width: 0, text: '' };
+    
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (password.length >= 12) strength++;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+    if (/\d/.test(password)) strength++;
+    if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+    if (strength <= 2) return { level: 'weak', width: 33, text: 'Débil' };
+    if (strength <= 4) return { level: 'medium', width: 66, text: 'Media' };
+    return { level: 'strong', width: 100, text: 'Fuerte' };
   };
+
+  const passwordStrength = calculatePasswordStrength(newPassword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage({ type: '', text: '' });
 
-    // Validaciones del frontend
-    if (formData.new_password !== formData.confirm_password) {
+    // Validaciones
+    if (!newPassword || !confirmPassword) {
       setMessage({
         type: 'error',
-        text: 'Las contraseñas no coinciden',
+        text: 'Por favor, completa todos los campos',
       });
       setLoading(false);
       return;
     }
 
-    if (formData.new_password.length < 8) {
+    if (newPassword.length < 8) {
       setMessage({
         type: 'error',
         text: 'La contraseña debe tener al menos 8 caracteres',
@@ -81,18 +91,30 @@ const ResetPassword = () => {
       return;
     }
 
-    try {
-      const response = await fetch('http://localhost:8000/api/auth/password-reset/confirm/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          new_password: formData.new_password,
-          confirm_password: formData.confirm_password,
-        }),
+    if (newPassword !== confirmPassword) {
+      setMessage({
+        type: 'error',
+        text: 'Las contraseñas no coinciden',
       });
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        'http://localhost:8000/api/auth/password-reset/confirm/',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token,
+            new_password: newPassword,
+            confirm_password: confirmPassword,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -102,7 +124,6 @@ const ResetPassword = () => {
           text: '✅ Contraseña actualizada exitosamente. Redirigiendo al login...',
         });
         
-        // Redirigir al login después de 2 segundos
         setTimeout(() => {
           navigate('/');
         }, 2000);
@@ -122,29 +143,34 @@ const ResetPassword = () => {
     }
   };
 
+  // Loading state
   if (validatingToken) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Validando enlace...</p>
+      <div className="password-recovery-container">
+        <div className="recovery-card">
+          <div className="validating-container">
+            <div className="validating-spinner"></div>
+            <p className="validating-text">Validando enlace...</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Invalid token state
   if (!tokenValid) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900">
-              Enlace no válido
-            </h2>
-            <p className="mt-2 text-sm text-red-600">{message.text}</p>
+      <div className="password-recovery-container">
+        <div className="recovery-card">
+          <div className="invalid-token-container">
+            <div className="error-icon">
+              <AlertCircle size={40} />
+            </div>
+            <h2>Enlace no válido</h2>
+            <p>{message.text}</p>
             <button
+              className="btn-submit"
               onClick={() => navigate('/forgot-password')}
-              className="mt-4 text-blue-600 hover:text-blue-500"
             >
               Solicitar nuevo enlace
             </button>
@@ -154,74 +180,183 @@ const ResetPassword = () => {
     );
   }
 
+  // Main form
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Restablecer contraseña
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Ingresa tu nueva contraseña
-          </p>
+    <div className="password-recovery-container">
+      <div className="recovery-card">
+        {/* Header */}
+        <div className="recovery-header">
+          <div className="recovery-icon">
+            <Lock size={36} />
+          </div>
+          <h2>Restablecer contraseña</h2>
+          <p>Ingresa tu nueva contraseña</p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        {/* Formulario */}
+        <form className="recovery-form" onSubmit={handleSubmit}>
+          {/* Mensaje de alerta */}
           {message.text && (
-            <div
-              className={`p-4 rounded-md ${
-                message.type === 'success'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}
-            >
-              {message.text}
+            <div className={`alert alert-${message.type}`}>
+              <span className="alert-icon">
+                {message.type === 'success' ? (
+                  <CheckCircle size={20} />
+                ) : (
+                  <AlertCircle size={20} />
+                )}
+              </span>
+              <span>{message.text}</span>
             </div>
           )}
 
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="new_password" className="block text-sm font-medium text-gray-700">
-                Nueva contraseña
-              </label>
+          {/* Nueva contraseña */}
+          <div className="form-group">
+            <label htmlFor="newPassword">Nueva contraseña</label>
+            <div style={{ position: 'relative' }}>
               <input
-                id="new_password"
-                name="new_password"
-                type="password"
+                id="newPassword"
+                type={showPassword ? 'text' : 'password'}
                 required
-                value={formData.new_password}
-                onChange={handleChange}
-                className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Mínimo 8 caracteres"
                 disabled={loading}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '4px'
+                }}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
+            
+            {/* Indicador de fuerza */}
+            {newPassword && (
+              <div className="password-strength">
+                <div className="strength-bar">
+                  <div 
+                    className={`strength-fill ${passwordStrength.level}`}
+                    style={{ width: `${passwordStrength.width}%` }}
+                  ></div>
+                </div>
+                <span className={`strength-text ${passwordStrength.level}`}>
+                  Seguridad: {passwordStrength.text}
+                </span>
+              </div>
+            )}
+          </div>
 
-            <div>
-              <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700">
-                Confirmar contraseña
-              </label>
+          {/* Confirmar contraseña */}
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirmar contraseña</label>
+            <div style={{ position: 'relative' }}>
               <input
-                id="confirm_password"
-                name="confirm_password"
-                type="password"
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
                 required
-                value={formData.confirm_password}
-                onChange={handleChange}
-                className="mt-1 appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Repite la contraseña"
                 disabled={loading}
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#6b7280',
+                  padding: '4px'
+                }}
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            
+            {/* Validación de coincidencia */}
+            {confirmPassword && (
+              <div>
+                {newPassword === confirmPassword ? (
+                  <span className="input-success-message">
+                    <CheckCircle size={14} />
+                    Las contraseñas coinciden
+                  </span>
+                ) : (
+                  <span className="input-error-message">
+                    <AlertCircle size={14} />
+                    Las contraseñas no coinciden
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Requisitos de contraseña */}
+          <div className="password-requirements">
+            <h4>Requisitos de contraseña:</h4>
+            <div className="requirement">
+              <span className="requirement-icon">
+                {newPassword.length >= 8 ? '✓' : '○'}
+              </span>
+              <span>Mínimo 8 caracteres</span>
+            </div>
+            <div className="requirement">
+              <span className="requirement-icon">
+                {/[A-Z]/.test(newPassword) && /[a-z]/.test(newPassword) ? '✓' : '○'}
+              </span>
+              <span>Mayúsculas y minúsculas</span>
+            </div>
+            <div className="requirement">
+              <span className="requirement-icon">
+                {/\d/.test(newPassword) ? '✓' : '○'}
+              </span>
+              <span>Al menos un número</span>
             </div>
           </div>
 
-          <div>
+          {/* Botón de envío */}
+          <button
+            type="submit"
+            className="btn-submit"
+            disabled={loading || newPassword !== confirmPassword}
+          >
+            {loading ? (
+              <>
+                <div className="loading-spinner"></div>
+                Actualizando...
+              </>
+            ) : (
+              <>
+                <Lock size={20} />
+                Actualizar contraseña
+              </>
+            )}
+          </button>
+
+          {/* Link para volver */}
+          <div className="recovery-link">
             <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              type="button"
+              onClick={() => navigate('/')}
             >
-              {loading ? 'Actualizando...' : 'Actualizar contraseña'}
+              <ArrowLeft size={16} />
+              Volver al inicio de sesión
             </button>
           </div>
         </form>

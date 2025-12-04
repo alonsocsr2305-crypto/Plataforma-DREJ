@@ -58,7 +58,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    padding: 9px;
+    padding: 12px;
     background: #f0fdf4;
     border-left: 4px solid #22c55e;
     border-radius: 9px;
@@ -68,13 +68,14 @@
 .dni-verified-info strong {
     display: block;
     color: #166534;
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .dni-verified-info p {
     margin: 0px 0 0;
     color: #15803d;
     font-size: 14px;
+    z-index: 1000;
 }
 
 .rol-selection h3 {

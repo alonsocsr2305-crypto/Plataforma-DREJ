@@ -3,7 +3,7 @@ export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8
 
 export const ENDPOINTS = {
     INSTITUCIONES: `${API_BASE_URL}/api/instituciones/`,
-    RENIEC_MOCK: `${API_BASE_URL}/api/reniec/mock/`,
+    RENIEC: `${API_BASE_URL}/api/reniec/consultar/`,
     CHECK_DNI: `${API_BASE_URL}/api/check-dni/`,
     CHECK_EMAIL: `${API_BASE_URL}/api/check-email/`,
     VALIDATE_DOMAIN: `${API_BASE_URL}/api/validate-domain/`,

@@ -77,24 +77,20 @@ def solicitar_recuperacion_password(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['POST'])
+@api_view(['GET'])
 @permission_classes([AllowAny])
 def validar_token_reset(request):
     """
     Validar si un token de recuperación es válido
     
-    POST /api/auth/password-reset/validate-token/
-    
-    Body:
-    {
-        "token": "uuid-token-here"
-    }
+    GET /api/auth/password-reset/validate-token/?token=uuid-token-here
     
     Returns:
         200: Token válido
         400: Token inválido o expirado
     """
-    token_str = request.data.get('token', '').strip()
+    # Obtener token de query params en lugar de body
+    token_str = request.GET.get('token', '').strip()
     
     if not token_str:
         return Response({
@@ -133,7 +129,7 @@ def validar_token_reset(request):
             'valid': False,
             'message': 'Error al validar el token'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

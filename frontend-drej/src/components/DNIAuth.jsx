@@ -93,8 +93,10 @@ const DNIAuth = ({ isOpen, onClose }) => {
                 return;
             }
 
-            const reniecData = await fetch(`http://127.0.0.1:8000/api/reniec/mock/${dni}/`)
+            const reniecData = await fetch(`http://127.0.0.1:8000/api/reniec/consultar/${dni}/`)
                 .then(res => res.json());
+
+                console.log('Respuesta completa de RENIEC:', reniecData);
 
             if (reniecData.success) {
                 setDniData({
@@ -389,6 +391,7 @@ const DNIAuth = ({ isOpen, onClose }) => {
                 {/* ========== MODO REGISTRO: PASO 2 - ROL ========== */}
                 {mode === 'register' && step === 2 && dniData && (
                     <>
+                    {console.log('dniData en paso 2:', dniData)}
                         <div className="modal-header">
                             <h2>Crear Cuenta</h2>
                             <p className="modal-subtitle">Selecciona tu tipo de cuenta</p>
@@ -398,7 +401,8 @@ const DNIAuth = ({ isOpen, onClose }) => {
                             <div className="dni-verified-info">
                                 <CheckCircle size={24} color="green" />
                                 <div>
-                                    <strong>DNI Verificado: {dniData.dni}</strong>
+                                    <strong>DNI Verificado: {dniData.dni}
+                                    </strong>
                                     <p>{dniData.nombres} {dniData.apellidoPaterno} {dniData.apellidoMaterno}</p>
                                 </div>
                             </div>

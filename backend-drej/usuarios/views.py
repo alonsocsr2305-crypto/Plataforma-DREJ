@@ -200,16 +200,19 @@ def consultar_reniec(request, dni):
         response = requests.get(url, headers=headers, timeout=10)
         
         if response.status_code == 200:
-            data = response.json()
+            result = response.json()
+
+            data = result.get('data', {})
+
             logger.info(f"[FACTILIZA] Consulta exitosa para DNI: {dni}")
             
             return Response({
                 "success": True,
                 "dni": dni,
-                "nombres": data.get("nombres", data.get("name", "")),
-                "apellidoPaterno": data.get("apellidoPaterno", data.get("paternal_surname", "")),
-                "apellidoMaterno": data.get("apellidoMaterno", data.get("maternal_surname", "")),
-                "fechaNacimiento": data.get("fechaNacimiento", data.get("birth_date", "")),
+                "nombres": data.get("nombres", ""),  # ✅ Ahora con guiones bajos
+                "apellidoPaterno": data.get("apellido_paterno", ""),  # ✅
+                "apellidoMaterno": data.get("apellido_materno", ""),  # ✅
+                "fechaNacimiento": data.get("fecha_nacimiento", ""),  # ✅
             }, status=status.HTTP_200_OK)
         
         elif response.status_code == 404:
